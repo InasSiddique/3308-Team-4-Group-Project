@@ -13,6 +13,9 @@ const session = require('express-session'); // To set the session object. To sto
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 
+const NUTRISLICE_URL = "https://colorado-diningmenus.api.nutrislice.com";
+const NUTRISLICE_MENU_ENDPOINT = NUTRISLICE_URL + "/menu/api/schools/?";
+
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
 // *****************************************************
@@ -88,4 +91,47 @@ console.log('Server is listening on port 3000');
 
 app.get("/", async (req, res) => {
 	res.status(200).render("pages/login");
+});
+
+app.get("/getMenus", async (req, res) => {
+	try {
+		const response = await fetch(NUTRISLICE_MENU_ENDPOINT);
+		if (!response.ok) {
+			throw new Error(`Response status: ${response.status}`);
+		}
+
+		const result = await response.json();
+
+		return res.status(200).json({ data: result });
+	} catch (err) {
+		return res.status(400).json({ error: err });
+	}
+});
+
+app.get("/getWeeklyMenu", async (req, res) => {
+	const location = req.query.location;
+
+	try {
+		if (location == null) {
+			return res.status(400).json({ message: "expected 'location' query parameter" })
+		}
+
+		const response = await fetch(NUTRISLICE_MENU_ENDPOINT);
+		const result = await response.json();
+
+		const locations = result.map(l => l.slug);
+
+		const location_data = result.find(l => l.slug == location);
+		if (location_data == null) {
+			return res.status(400).json({ message: "location not found.", "locations": locations })
+		}
+
+		// get actual menu data for each menu
+		let promises = location_data.active_menu_types.map(menu_type => fetch(NUTRISLICE_URL + menu_type.full_menu_by_date_api_url_template))
+		let all_promise = Promise.all(promises)
+
+		return res.status(200).json({ message: "sucess", data: location_data })
+	} catch (err) {
+		return res.status(400).json({ error: err });
+	}
 });
