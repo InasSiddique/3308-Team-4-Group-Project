@@ -104,12 +104,13 @@ app.get("/getMenus", async (req, res) => {
 
 		return res.status(200).json({ data: result });
 	} catch (err) {
-		return res.status(400).json({ error: err });
+		return res.status(400).json({ error: err.toString() });
 	}
 });
 
 app.get("/getWeeklyMenu", async (req, res) => {
 	const location = req.query.location;
+	let date = new Date();
 
 	try {
 		if (location == null) {
@@ -117,6 +118,10 @@ app.get("/getWeeklyMenu", async (req, res) => {
 		}
 
 		const response = await fetch(NUTRISLICE_MENU_ENDPOINT);
+		if (!response.ok) {
+			throw new Error(`Response status: ${response.status}`);
+		}
+
 		const result = await response.json();
 
 		const locations = result.map(l => l.slug);
@@ -127,11 +132,28 @@ app.get("/getWeeklyMenu", async (req, res) => {
 		}
 
 		// get actual menu data for each menu
-		let promises = location_data.active_menu_types.map(menu_type => fetch(NUTRISLICE_URL + menu_type.full_menu_by_date_api_url_template))
-		let all_promise = Promise.all(promises)
+		let fetch_urls = [];
+		for (var menu of location_data.active_menu_types) {
+			// a url endpoint template for the menu. Has the fields "{year}", "{month}", and "{day}".
+			let url_template = menu.urls.full_menu_by_date_api_url_template;
+
+			let full_menu_endpoint = url_template
+			full_menu_endpoint = full_menu_endpoint.replace("{year}", date.getFullYear())
+			full_menu_endpoint = full_menu_endpoint.replace("{month}", (date.getMonth() + 1).toString().padStart(2, '0'))
+			full_menu_endpoint = full_menu_endpoint.replace("{day}", date.getDate().toString().padStart(2, '0'))
+
+			fetch_urls.push(NUTRISLICE_URL + full_menu_endpoint)
+		}
+
+		let menu_data = await Promise.all(fetch_urls.map(async url => { const r = await fetch(url); return r.json(); })).catch(e => { throw new Error(`Response status: ${e.status}`); });
+
+		// add data to return object
+		for (let i in location_data.active_menu_types) {
+			location_data.active_menu_types[i].data = menu_data[i];
+		}
 
 		return res.status(200).json({ message: "sucess", data: location_data })
 	} catch (err) {
-		return res.status(400).json({ error: err });
+		return res.status(400).json({ error: err.toString() });
 	}
 });
