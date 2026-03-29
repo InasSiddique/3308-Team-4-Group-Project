@@ -131,7 +131,7 @@ app.get("/getWeeklyMenu", async (req, res) => {
 			return res.status(400).json({ message: "location not found.", "locations": locations })
 		}
 
-		// get actual menu data for each menu
+		// get actual menu data for each menu. Due to my knowledge of the nature of the API, this must be split over multiple fetch requests.
 		let fetch_urls = [];
 		for (var menu of location_data.active_menu_types) {
 			// a url endpoint template for the menu. Has the fields "{year}", "{month}", and "{day}".
