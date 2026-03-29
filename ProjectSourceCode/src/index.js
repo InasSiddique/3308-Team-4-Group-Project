@@ -110,11 +110,17 @@ app.get("/getMenus", async (req, res) => {
 
 app.get("/getWeeklyMenu", async (req, res) => {
 	const location = req.query.location;
+	// expects date in yyyy-mm-dd format. Can be gotten from date.toISOString().split("T")[0].
 	let date = new Date();
+	let full_menu = req.query.full_menu != null && req.query.full_menu == false;
 
 	try {
 		if (location == null) {
 			return res.status(400).json({ message: "expected 'location' query parameter" })
+		}
+
+		if (req.query.date != null) {
+			date = new Date(req.query.date);
 		}
 
 		const response = await fetch(NUTRISLICE_MENU_ENDPOINT);
@@ -135,7 +141,7 @@ app.get("/getWeeklyMenu", async (req, res) => {
 		let fetch_urls = [];
 		for (var menu of location_data.active_menu_types) {
 			// a url endpoint template for the menu. Has the fields "{year}", "{month}", and "{day}".
-			let url_template = menu.urls.full_menu_by_date_api_url_template;
+			let url_template = full_menu ? menu.urls.full_menu_by_date_api_url_template : menu.urls.digest_menu_by_week_api_url_template;
 
 			let full_menu_endpoint = url_template
 			full_menu_endpoint = full_menu_endpoint.replace("{year}", date.getFullYear())
