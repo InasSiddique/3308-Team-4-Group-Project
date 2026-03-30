@@ -14,7 +14,7 @@ const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 
 const NUTRISLICE_URL = "https://colorado-diningmenus.api.nutrislice.com";
-const NUTRISLICE_MENU_ENDPOINT = NUTRISLICE_URL + "/menu/api/schools/?";
+const NUTRISLICE_LOCATIONS_ENDPOINT = NUTRISLICE_URL + "/menu/api/schools/?";
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -93,9 +93,9 @@ app.get("/", async (req, res) => {
 	res.status(200).render("pages/login");
 });
 
-app.get("/getMenus", async (req, res) => {
+app.get("/getLocations", async (req, res) => {
 	try {
-		const response = await fetch(NUTRISLICE_MENU_ENDPOINT);
+		const response = await fetch(NUTRISLICE_LOCATIONS_ENDPOINT);
 		if (!response.ok) {
 			throw new Error(`Response status: ${response.status}`);
 		}
@@ -123,7 +123,7 @@ app.get("/getWeeklyMenu", async (req, res) => {
 			date = new Date(req.query.date);
 		}
 
-		const response = await fetch(NUTRISLICE_MENU_ENDPOINT);
+		const response = await fetch(NUTRISLICE_LOCATIONS_ENDPOINT);
 		if (!response.ok) {
 			throw new Error(`Response status: ${response.status}`);
 		}
