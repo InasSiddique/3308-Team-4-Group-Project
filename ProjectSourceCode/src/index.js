@@ -81,6 +81,66 @@ app.use(express.static(__dirname + '/'));
 // *****************************************************
 
 // TODO - Include your API routes here
+// GET / - redirect to login
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
+
+// GET /login
+app.get('/login', (req, res) => {
+  res.render('pages/login');
+});
+
+// POST /login
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+    if (!user) {
+      return res.render('pages/login', { message: 'Username not found.', error: true });
+    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.render('pages/login', { message: 'Incorrect password.', error: true });
+    }
+    req.session.user = { id: user.id, username: user.username };
+    req.session.save(() => res.redirect('/home'));
+  } catch (err) {
+    console.error(err);
+    res.render('pages/login', { message: 'Something went wrong.', error: true });
+  }
+});
+
+// GET /register
+app.get('/register', (req, res) => {
+  res.render('pages/register');
+});
+
+// POST /register
+app.post('/register', async (req, res) => {
+  const { username, email, password } = req.body;
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hash]);
+    res.redirect('/login');
+  } catch (err) {
+    console.error(err);
+    res.render('pages/register', { message: 'Username or email already exists.', error: true });
+  }
+});
+
+// GET /logout
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
+});
+
+// GET /home
+app.get('/home', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  res.render('pages/home', { user: req.session.user });
+});
 
 // *****************************************************
 // <!-- Section 5 : Start Server-->
@@ -88,10 +148,6 @@ app.use(express.static(__dirname + '/'));
 // starting the server and keeping the connection open to listen for more requests
 app.listen(3000);
 console.log('Server is listening on port 3000');
-
-app.get("/", async (req, res) => {
-	res.status(200).render("pages/login");
-});
 
 app.get("/getLocations", async (req, res) => {
 	try {
