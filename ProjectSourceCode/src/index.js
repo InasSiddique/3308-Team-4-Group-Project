@@ -176,7 +176,7 @@ app.get("/getWeeklyMenu", async (req, res) => {
 			return res.status(400).json({ message: "expected 'location' query parameter" })
 		}
 
-		if (req.query.full_menu != null && !(req.query.full_menu != "true" || req.query.full_menu != "false")) {
+		if (req.query.full_menu != null && (req.query.full_menu != "true" && req.query.full_menu != "false")) {
 			return res.status(400).json({ message: "expected 'full_menu' to be 'true' or 'false'" })
 		}
 		let full_menu = req.query.full_menu == null || (req.query.full_menu != null && req.query.full_menu == "true");
