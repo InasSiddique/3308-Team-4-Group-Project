@@ -1,4 +1,4 @@
-# Feature 1: User Registration\
+# Feature 1: User Registration
 ## Description: A new user should be able to create an account by providing a username, email, and password. The password must be hashed before being stored in the database.
 
 ### Test Data
@@ -30,7 +30,7 @@ Expected Result: Form does not submit. Browser shows a required field validation
 Actual Result: (to be filled in during testing)\
 Status: (Pass / Fail)
 
-# Feature 2: User Login and Logout\
+# Feature 2: User Login and Logout
 ## Description: A registered user should be able to log in with valid credentials, be redirected to the home page, and log out to end their session. Invalid credentials should be rejected with specific feedback.
 
 ### Test Data
@@ -68,7 +68,7 @@ Expected Result: Session is destroyed. User is redirected to /login. Navigating 
 Actual Result: (to be filled in during testing)\
 Status: (Pass / Fail)
 
-# Feature 3: Nutrislice API Integration\
+# Feature 3: Nutrislice API Integration
 ## Description: The server should be able to successfully fetch dining hall location data and weekly menu data from the Nutrislice API. Responses should return the correct data and handle errors gracefully.
 
 ### Test Data
