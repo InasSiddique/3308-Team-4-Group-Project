@@ -12,12 +12,12 @@ const { assert, expect } = chai;
 
 // ********************** DEFAULT WELCOME TESTCASE ****************************
 
-describe('Server!', () => {
+describe('Check if the Testing Infrastructure is Working', () => {
 	// Sample test case given to test / endpoint.
 	it('Returns the default welcome message', done => {
 		chai
 			.request(server)
-			.get('/welcome')
+			.get('/testTestingWorking')
 			.end((err, res) => {
 				expect(res).to.have.status(200);
 				expect(res.body.status).to.equals('success');
@@ -46,7 +46,7 @@ describe('Testing Register API', () => {
 		chai
 			.request(server)
 			.post('/register')
-			.send({ username: "username", email: "example@email.com", password: "password" })
+			.send({ username: "testuser", email: "example@email.com", password: "password" })
 			.end((err, res) => {
 				expect(res).to.have.status(400);
 				done();
@@ -56,6 +56,23 @@ describe('Testing Register API', () => {
 
 describe('Testing Login API', () => {
 	it('positive (valid credentials): /login', done => {
-
-	})
+		chai
+			.request(server)
+			.post('/login')
+			.send({ username: "testuser", password: "password" })
+			.end((err, res) => {
+				expect(res).to.have.status(200);
+				done();
+			});
+	});
+	it('negative (invalid credentials): /login', done => {
+		chai
+			.request(server)
+			.post('/login')
+			.send({ username: "testuser", password: "wrongpassword" })
+			.end((err, res) => {
+				expect(res).to.have.status(400);
+				done();
+			});
+	});
 })

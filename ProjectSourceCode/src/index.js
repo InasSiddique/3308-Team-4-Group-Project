@@ -97,17 +97,18 @@ app.post('/login', async (req, res) => {
 	try {
 		const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
 		if (!user) {
-			return res.render('pages/login', { message: 'Username not found.', error: true });
+			return res.status(400).render('pages/login', { message: 'Username not found.', error: true });
 		}
 		const match = await bcrypt.compare(password, user.password);
 		if (!match) {
-			return res.render('pages/login', { message: 'Incorrect password.', error: true });
+			return res.status(400).render('pages/login', { message: 'Incorrect password.', error: true });
 		}
 		req.session.user = { id: user.id, username: user.username };
 		req.session.save(() => res.redirect('/home'));
+		res.status(200)
 	} catch (err) {
 		console.error(err);
-		res.render('pages/login', { message: 'Something went wrong.', error: true });
+		res.status(400).render('pages/login', { message: 'Something went wrong.', error: true });
 	}
 });
 
@@ -118,6 +119,7 @@ app.get('/register', (req, res) => {
 
 // POST /register
 app.post('/register', async (req, res) => {
+	console.log("bcrypt hash: " + await bcrypt.hash("password", 10))
 	const { username, email, password } = req.body;
 	try {
 		const hash = await bcrypt.hash(password, 10);
@@ -225,6 +227,6 @@ app.get("/getWeeklyMenu", async (req, res) => {
 });
 
 // test welcome endpoint for lab 10
-app.get('/welcome', (req, res) => {
+app.get('/testTestingWorking', (req, res) => {
 	res.json({ status: 'success', message: 'Welcome!' });
 });
