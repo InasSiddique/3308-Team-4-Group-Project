@@ -75,7 +75,7 @@ Status: (Pass / Fail)
 | Parameter | Valid Value | Invalid Value |
 | -------- | -------- | -------- |
 | location | center-for-community | fakelocation |
-| date | 2026-04-07 | nothing |
+| date | 2026-04-07 |  |
 
 ### Test Cases
 TC-3.1 — Fetch All Dining Hall Locations
