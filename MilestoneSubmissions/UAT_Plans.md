@@ -16,12 +16,51 @@ Expected Result: User is redirected to /login. A new row exists in the users tab
 Actual Result: (to be filled in during testing)\
 Status: (Pass / Fail)
 
+Output:
+Database connection successful
+    ✓ positive (adding a new user): /register (138ms)
+
 TC-1.2 — Registration with Duplicate Username
 
 Steps: Attempt to register with a username that already exists in the database\
 Expected Result: User stays on /register and sees an error message: "Username or email already exists."\
 Actual Result: (to be filled in during testing)\
 Status: (Pass / Fail)
+
+Output:
+Testing Register API
+2026-04-02 19:52:35.877 UTC [74] STATEMENT:  INSERT INTO users (username, email, password) VALUES ('testuser', 'example@email.com', '$2a$10$2JulJDIDeDUJJ18BDn3KvewqnxPSgEH4KklRTXHtb3/bQkuiTSDhK')
+ error: duplicate key value violates unique constraint "users_username_key"
+    at parseErrorMessage (/repository/node_modules/pg-protocol/dist/parser.js:305:11)
+    at Parser.handlePacket (/repository/node_modules/pg-protocol/dist/parser.js:143:27)
+    at Parser.parse (/repository/node_modules/pg-protocol/dist/parser.js:37:38)
+    at Socket.<anonymous> (/repository/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+      length: 209,
+      severity: 'ERROR',
+      code: '23505',
+      detail: 'Key (username)=(testuser) already exists.',
+      hint: undefined,
+      position: undefined,
+      internalPosition: undefined,
+      internalQuery: undefined,
+      where: undefined,
+      schema: 'public',
+      table: 'users',
+      column: undefined,
+      dataType: undefined,
+      constraint: 'users_username_key',
+      file: 'nbtinsert.c',
+      line: '663',
+      routine: '_bt_check_unique',
+      query: "INSERT INTO users (username, email, password) VALUES ('testuser', 'example@email.com', '$2a$10$2JulJDIDeDUJJ18BDn3KvewqnxPSgEH4KklRTXHtb3/bQkuiTSDhK')",
+      params: undefined
+    }
+    ✓ negative (adding a user with same username): /register (119ms)
 
 TC-1.3 — Registration with Missing Fields
 
@@ -47,12 +86,20 @@ Expected Result: User is redirected to /home. Session is created with the user's
 Actual Result: (to be filled in during testing)\
 Status: (Pass / Fail)
 
+Output:
+Testing Login API
+    ✓ positive (valid credentials): /login (65ms)
+
 TC-2.2 — Login with Incorrect Password
 
 Steps: Navigate to /login, enter a valid username but wrong password, click Login\
 Expected Result: User stays on /login and sees the error message: "Incorrect password."\
 Actual Result: (to be filled in during testing)\
 Status: (Pass / Fail)
+
+Output:
+Testing Login API
+    ✓ negative (invalid credentials): /login (60ms)
 
 TC-2.3 — Login with Non-Existent Username
 
