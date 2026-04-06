@@ -33,7 +33,11 @@ describe('Check if the Testing Infrastructure is Working', () => {
 //
 describe('Testing Register API', () => {
 	before(() => {
-		console.log = () => { }
+		this.origonalError = console.error
+		console.error = () => { }
+	})
+	after(() => {
+		console.error = this.origonalError
 	})
 	it('positive (adding a new user): /register', done => {
 		chai
