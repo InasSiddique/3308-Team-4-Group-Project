@@ -1,0 +1,49 @@
+/* General page styling */
+body {
+  background-color: #A2A4A3; /* CU Light Grey */
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* Navbar */
+.navbar {
+  background-color: #000000; /* Black */
+}
+
+.navbar img {
+  height: 40px;
+}
+
+/* Card (login + register box) */
+.card {
+  border-radius: 12px;
+}
+
+/* CU Button */
+.btn-cu {
+  background-color: #CFB87C; /* CU Gold */
+  color: black;
+  font-weight: 500;
+}
+
+/* Prevent Bootstrap from turning text white */
+.btn-cu:hover,
+.btn-cu:focus,
+.btn-cu:active {
+  background-color: #bfa56a;
+  color: black;
+}
+
+/* Links (Sign up / Login links) */
+a {
+  color: #CFB87C;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Optional: center text color consistency */
+.text-muted {
+  color: #565A5C !important; /* CU Dark Grey */
+}
