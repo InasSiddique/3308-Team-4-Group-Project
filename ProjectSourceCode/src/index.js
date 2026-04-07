@@ -136,6 +136,23 @@ app.get('/logout', (req, res) => {
 	req.session.destroy(() => res.redirect('/login'));
 });
 
+// GET /profile
+app.get('/profile', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  try {
+    const user = await db.oneOrNone('SELECT id, username, email FROM users WHERE id = $1', [req.session.user.id]);
+    if (!user) {
+      return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
+    }
+    res.status(200).render('pages/profile', { user });
+  } catch (err) {
+    console.error(err);
+    res.status(400).render('pages/profile', { message: 'Something went wrong.', error: true });
+  }
+});
+
 // GET /home
 app.get('/home', (req, res) => {
 	if (!req.session.user) {
