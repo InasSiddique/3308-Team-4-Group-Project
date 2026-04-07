@@ -153,6 +153,36 @@ app.get('/profile', async (req, res) => {
   }
 });
 
+// POST /profile/update-password
+app.post('/profile/update-password', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  const { old_password, new_password } = req.body;
+  try {
+    // Fetch the current hashed password from the DB
+    const user = await db.oneOrNone('SELECT * FROM users WHERE id = $1', [req.session.user.id]);
+    if (!user) {
+      return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
+    }
+
+    // Check that the old password matches
+    const match = await bcrypt.compare(old_password, user.password);
+    if (!match) {
+      return res.status(400).render('pages/profile', { user: { id: user.id, username: user.username, email: user.email }, message: 'Current password is incorrect.', error: true });
+    }
+
+    // Hash and save the new password
+    const hash = await bcrypt.hash(new_password, 10);
+    await db.none('UPDATE users SET password = $1 WHERE id = $2', [hash, req.session.user.id]);
+
+    res.status(200).render('pages/profile', { user: { id: user.id, username: user.username, email: user.email }, message: 'Password updated successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(400).render('pages/profile', { message: 'Failed to update password.', error: true });
+  }
+});
+
 // GET /home
 app.get('/home', (req, res) => {
 	if (!req.session.user) {
