@@ -10,6 +10,15 @@ chai.should();
 chai.use(chaiHttp);
 const { assert, expect } = chai;
 
+function randomString(length) {
+	let result = '';
+	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	while (result.length < length) {
+		result += characters.charAt(Math.floor(Math.random() * characters.length));
+	}
+	return result;
+}
+
 // ********************** DEFAULT WELCOME TESTCASE ****************************
 
 describe('Check if the Testing Infrastructure is Working', () => {
@@ -36,7 +45,7 @@ describe('Testing Register API', () => {
 		chai
 			.request(server)
 			.post('/register')
-			.send({ username: "new_user", email: "new_email@email.com", password: "password" })
+			.send({ username: `new_user${randomString(5)}`, email: `new_email${randomString(5)}@email.com`, password: "password" })
 			.end((err, res) => {
 				expect(res).to.have.status(200);
 				done();
