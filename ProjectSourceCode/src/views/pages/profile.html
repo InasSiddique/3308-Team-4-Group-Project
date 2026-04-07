@@ -18,16 +18,23 @@
   </nav>
 
   <!-- Profile -->
-  <div class="container-fluid justify-content-start align-items-start mt-4" style="height: 90vh;">
+  <div class="container-fluid mt-4">
     <h1 class="text">Profile</h1>
-    <div class="card p-4" style="max-width: 400px; width: 100%; border: 2px solid #000;">
-
-      <h3 class="text">"First LastName"</h3>
-      <h6 class="text-muted">"email@something.net"</h6>
-      <br> 
-      <h6 class="text">Username: "FAKEUSERNAME" </h6>
-
+    <div class="d-flex gap-3">
+      <div class="card p-4 flex-grow-1" style="border: 2px solid #000;">
+        <h3 class="text">"First LastName"</h3>
+        <h6 class="text-muted">"email@something.net"</h6>
+        <br> 
+        <div class="d-flex align-items-center gap-4">
+          <h6 class="text mb-0" style="width: 100px;">Username:</h6>
+          <div class="border rounded px-2 py-1" style="width: 150px;">FAKEUSERNAME</div>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+          <h6 class="text mb-0" style="width: 100px;">Password:</h6>
+          <input type="password" class="form-control" value="fakepassword" readonly style="width: 150px; pointer-events: none;">
+        </div>
+        <br>
+      </div>
     </div>
   </div>
-
 </body>
