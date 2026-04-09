@@ -1,0 +1,5 @@
+Test Case 1:
+    Positive:
+        If someone tries to create a brand new unqiue username then the username and password will be properly inserted into the users table
+    Negative:
+        If someone tries to create a duplicate username that is already in the table then there will be an error and will throw an 400 http status code
