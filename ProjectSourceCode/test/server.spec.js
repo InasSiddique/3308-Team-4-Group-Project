@@ -41,6 +41,13 @@ describe('Check if the Testing Infrastructure is Working', () => {
 // ********************************************************************************
 //
 describe('Testing Register API', () => {
+	before(() => {
+		this.origonalError = console.error
+		console.error = () => { }
+	})
+	after(() => {
+		console.error = this.origonalError
+	})
 	it('positive (adding a new user): /register', done => {
 		chai
 			.request(server)
@@ -81,6 +88,28 @@ describe('Testing Login API', () => {
 			.send({ username: "testuser", password: "wrongpassword" })
 			.end((err, res) => {
 				expect(res).to.have.status(400);
+				done();
+			});
+	});
+})
+
+describe('Testing Nutrislice API', () => {
+	it('positive : /getLocations', done => {
+		chai
+			.request(server)
+			.get('/getLocations')
+			.end((err, res) => {
+				expect(res).to.have.status(200);
+				done();
+			});
+	});
+	it('positive : /getWeeklyMenu', done => {
+		chai
+			.request(server)
+			.get('/getWeeklyMenu')
+			.query({ 'location': 'center-for-community', "full_menu": "false" })
+			.end((err, res) => {
+				expect(res).to.have.status(200);
 				done();
 			});
 	});
