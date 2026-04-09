@@ -13,6 +13,9 @@ const session = require('express-session'); // To set the session object. To sto
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 
+const NUTRISLICE_URL = "https://colorado-diningmenus.api.nutrislice.com";
+const NUTRISLICE_LOCATIONS_ENDPOINT = NUTRISLICE_URL + "/menu/api/schools/?";
+
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
 // *****************************************************
@@ -78,14 +81,151 @@ app.use(express.static(__dirname + '/'));
 // *****************************************************
 
 // TODO - Include your API routes here
+// GET / - redirect to login
+app.get('/', (req, res) => {
+	res.redirect('/login');
+});
+
+// GET /login
+app.get('/login', (req, res) => {
+	res.render('pages/login');
+});
+
+// POST /login
+app.post('/login', async (req, res) => {
+	const { username, password } = req.body;
+	try {
+		const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+		if (!user) {
+			return res.status(400).render('pages/login', { message: 'Username not found.', error: true });
+		}
+		const match = await bcrypt.compare(password, user.password);
+		if (!match) {
+			return res.status(400).render('pages/login', { message: 'Incorrect password.', error: true });
+		}
+		req.session.user = { id: user.id, username: user.username };
+		req.session.save(() => res.redirect('/home'));
+		res.status(200)
+	} catch (err) {
+		console.error(err);
+		res.status(400).render('pages/login', { message: 'Something went wrong.', error: true });
+	}
+});
+
+// GET /register
+app.get('/register', (req, res) => {
+	res.render('pages/register');
+});
+
+// POST /register
+app.post('/register', async (req, res) => {
+	const { username, email, password } = req.body;
+	try {
+		const hash = await bcrypt.hash(password, 10);
+		await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hash]);
+		res.status(200).redirect('/login');
+	} catch (err) {
+		console.error(err);
+		res.status(400).render('pages/register', { message: 'Username or email already exists.', error: true });
+	}
+});
+
+// GET /logout
+app.get('/logout', (req, res) => {
+	req.session.destroy(() => res.redirect('/login'));
+});
+
+// GET /home
+app.get('/home', (req, res) => {
+	if (!req.session.user) {
+		return res.redirect('/login');
+	}
+	res.render('pages/home', { user: req.session.user });
+});
 
 // *****************************************************
 // <!-- Section 5 : Start Server-->
 // *****************************************************
 // starting the server and keeping the connection open to listen for more requests
-app.listen(3000);
+module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
 
-app.get("/", async (req, res) => {
-	res.status(200).render("pages/login");
+app.get("/getLocations", async (req, res) => {
+	try {
+		const response = await fetch(NUTRISLICE_LOCATIONS_ENDPOINT);
+		if (!response.ok) {
+			throw new Error(`Response status: ${response.status}`);
+		}
+
+		const result = await response.json();
+
+		return res.status(200).json({ data: result });
+	} catch (err) {
+		return res.status(400).json({ error: err.toString() });
+	}
+});
+
+app.get("/getWeeklyMenu", async (req, res) => {
+	const location = req.query.location;
+	// expects date in yyyy-mm-dd format. Can be gotten from date.toISOString().split("T")[0].
+	let date = new Date();
+
+	try {
+		if (location == null) {
+			return res.status(400).json({ message: "expected 'location' query parameter" })
+		}
+
+		if (req.query.full_menu != null && (req.query.full_menu != "true" && req.query.full_menu != "false")) {
+			return res.status(400).json({ message: "expected 'full_menu' to be 'true' or 'false'" })
+		}
+		let full_menu = req.query.full_menu == null || (req.query.full_menu != null && req.query.full_menu == "true");
+
+		if (req.query.date != null) {
+			date = new Date(req.query.date);
+		}
+
+		const response = await fetch(NUTRISLICE_LOCATIONS_ENDPOINT);
+		if (!response.ok) {
+			throw new Error(`Response status: ${response.status}`);
+		}
+
+		const result = await response.json();
+
+		const locations = result.map(l => l.slug);
+
+		const location_data = result.find(l => l.slug == location);
+		if (location_data == null) {
+			return res.status(400).json({ message: "location not found.", "locations": locations })
+		}
+
+		// get actual menu data for each menu. Due to my knowledge of the nature of the API, this must be split over multiple fetch requests.
+		let fetch_urls = [];
+		for (var menu of location_data.active_menu_types) {
+			// a url endpoint template for the menu. Has the fields "{year}", "{month}", and "{day}".
+			let url_template = full_menu ? menu.urls.full_menu_by_date_api_url_template : menu.urls.digest_menu_by_week_api_url_template;
+
+			let full_menu_endpoint = url_template
+			full_menu_endpoint = full_menu_endpoint.replace("{year}", date.getFullYear())
+			full_menu_endpoint = full_menu_endpoint.replace("{month}", (date.getMonth() + 1).toString().padStart(2, '0'))
+			full_menu_endpoint = full_menu_endpoint.replace("{day}", date.getDate().toString().padStart(2, '0'))
+
+			fetch_urls.push(NUTRISLICE_URL + full_menu_endpoint)
+		}
+
+		let menu_data = await Promise.all(fetch_urls.map(async url => { const r = await fetch(url); return r.json(); })).catch(e => { throw new Error(`Response status: ${e.status}`); });
+
+		// add data to return object
+		for (let i in location_data.active_menu_types) {
+			location_data.active_menu_types[i].data = menu_data[i];
+		}
+
+		return res.status(200).json({ message: "sucess", data: location_data })
+	} catch (err) {
+		return res.status(400).json({ error: err.toString() });
+	}
+});
+
+// test welcome endpoint for lab 10
+app.get('/testTestingWorking', (req, res) => {
+	res.json({ status: 'success', message: 'Welcome!' });
 });
