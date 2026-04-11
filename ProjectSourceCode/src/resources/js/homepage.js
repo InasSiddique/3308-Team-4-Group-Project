@@ -3,8 +3,12 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+// menus to ignore.
+const BLACKLISTED_MENUS = ["c4c-meal-of-the-day"]
+
 // ── state ──
-let selectedTabIndex = 0;
+// selectedTabIndex of -1 means the ALL tab
+let selectedTabIndex = -1;
 let selectedDayIndex = 0;
 
 function getTodayIndex(dates) {
@@ -24,7 +28,12 @@ function fmtTime(t) {
 }
 
 function isOpenNow(dayKey, menuData) {
-	const h = menuData.hours[dayKey];
+	console.log("dk: " + dayKey)
+	const h = {
+		"enabled": menuData[dayKey + "_enabled"],
+		"start": menuData[dayKey + "_start"],
+		"end": menuData[dayKey + "_end"],
+	}
 	if (!h || !h.enabled) return false;
 	const now = new Date();
 	const [sh, sm] = h.start.split(':').map(Number);
@@ -37,8 +46,6 @@ function isOpenNow(dayKey, menuData) {
 function renderStatus(menuData, dates) {
 	const d = new Date(dates[selectedDayIndex] + 'T12:00:00');
 	const dayKey = DAY_KEYS[d.getDay()];
-	console.log(dayKey);
-	console.log(menuData[dayKey + "_start"])
 	const h = {
 		"enabled": menuData[dayKey + "_enabled"],
 		"start": menuData[dayKey + "_start"],
@@ -48,23 +55,32 @@ function renderStatus(menuData, dates) {
 
 	const badge = document.getElementById('statusBadge');
 	const isToday = selectedDayIndex === getTodayIndex(dates);
-	const open = isToday && isOpenNow(dayKey);
-	badge.textContent = open ? 'Open Now' : (h && h.enabled ? (isToday ? 'Closed' : (h.start ? fmtTime(h.start) + ' – ' + fmtTime(h.end) : 'Closed')) : 'Closed');
+	const open = isToday && isOpenNow(dayKey, menuData);
+	badge.textContent = h && h.enabled ? ((h.start ? fmtTime(h.start) + ' – ' + fmtTime(h.end) : 'Closed')) : "Closed";
 	badge.style.background = open ? '#2a6e2a' : '#b85c00';
+
+	const openBadge = document.getElementById('openNowBadge');
+	openBadge.style.display = open ? "block" : "none";
+	openBadge.style.background = open ? "#2a6e2a" : "#b85c00";
 }
 
 // ── tabs ──
 function renderTabs(menuData, dates) {
 	const el = document.getElementById('stationTabs');
 	el.innerHTML = '';
-	menuData.active_menu_types.forEach((mt, i) => {
+	// ensure we are copying the array
+	const tabs = menuData.active_menu_types.map(e => e);
+	tabs.unshift({ name: "All" })
+
+	// assign All tab an index of -1.
+	tabs.forEach((mt, i) => {
 		const btn = document.createElement('button');
-		btn.className = 'tab' + (i === selectedTabIndex ? ' active' : '');
+		btn.className = 'tab' + (i - 1 === selectedTabIndex ? ' active' : '');
 		btn.setAttribute('role', 'tab');
-		btn.setAttribute('aria-selected', i === selectedTabIndex ? 'true' : 'false');
+		btn.setAttribute('aria-selected', i - 1 === selectedTabIndex ? 'true' : 'false');
 		btn.textContent = mt.name;
 		btn.addEventListener('click', () => {
-			selectedTabIndex = i;
+			selectedTabIndex = i - 1;
 			renderTabs(menuData, dates); renderWeekHeader(menuData, dates); renderMenu(menuData);
 		});
 		el.appendChild(btn);
@@ -83,7 +99,7 @@ function renderWeekHeader(menuData, dates) {
 
 	dates.forEach((dateStr, i) => {
 		const d = new Date(dateStr + 'T12:00:00');
-		const mt = menuData.active_menu_types[selectedTabIndex].data;
+		// const mt = menuData.active_menu_types[selectedTabIndex].data;
 		// const hasItems = mt.days[i].stations.some(s => s.items.length > 0);
 
 		const btn = document.createElement('button');
@@ -113,12 +129,14 @@ function renderWeekHeader(menuData, dates) {
 // ── tags ──
 const ALLERGENS = new Set(['Milk', 'Egg', 'Wheat', 'Soy', 'Peanuts', 'Tree Nuts', 'Sesame', 'Shellfish', 'Fish', 'Gluten']);
 function tagsHTML(icons) {
+	if (icons == undefined) return "";
+
 	return icons.map(icon => {
-		if (icon === 'Vegan') return `<span class="tag tag-vegan">Vegan</span>`;
-		if (icon === 'Vegetarian') return `<span class="tag tag-veg">Vegetarian</span>`;
-		if (icon === 'Smart Pick' || icon === "Dietitian's Pick") return `<span class="tag tag-smart">✦ Smart Pick</span>`;
-		if (icon === 'Pork') return `<span class="tag tag-pork">Pork</span>`;
-		if (ALLERGENS.has(icon)) return `<span class="tag tag-allergen">${icon}</span>`;
+		if (icon.name === 'Vegan') return `<span class="tag tag-vegan">Vegan</span>`;
+		if (icon.name === 'Vegetarian') return `<span class="tag tag-veg">Vegetarian</span>`;
+		// if (icon.name === 'Smart Pick' || icon.name === "Dietitian's Pick") return `<span class="tag tag-smart">✦ Smart Pick</span>`;
+		if (icon.name === 'Pork') return `<span class="tag tag-pork">Pork</span>`;
+		if (ALLERGENS.has(icon.name)) return `<span class="tag tag-allergen">${icon.name}</span>`;
 		return '';
 	}).join('');
 }
@@ -126,9 +144,9 @@ function tagsHTML(icons) {
 // ── menu ──
 function renderMenu(menuData) {
 	const el = document.getElementById('menuContent');
-	const mt = menuData.active_menu_types[selectedTabIndex].data;
-	const day = mt.days[selectedDayIndex];
-	const stations = [day] //.stations.filter(s => s.items.length > 0);
+	const stations = selectedTabIndex <= -1 ? menuData.active_menu_types : [menuData.active_menu_types[selectedTabIndex]];
+	// const day = mt.days[selectedDayIndex];
+	// const stations = [day] //.stations.filter(s => s.items.length > 0);
 
 	if (!stations.length) {
 		el.innerHTML = `
@@ -150,13 +168,13 @@ function renderMenu(menuData) {
 									<div class="station-block">
 									<div class="station-name">${station.name}</div>
 									<div class="station-items">
-									${station.menu_items.map(item => `
+									${station.data.days[selectedDayIndex].menu_items.map(item => `
 									<div class="food-item">
 									<div class="food-item-left">
 									<div class="food-name">${item.food?.name}</div>
-									<div class="food-tags">${/*tagsHTML(item.icons)*/""}</div>
+									<div class="food-tags">${tagsHTML(item.food?.icons?.food_icons)}</div>
 									</div>
-									${item.cal ? `<div class="food-calories">${item.cal} cal</div>` : ''}
+									${item.cal ? `<div class="food-calories">${item.food?.rounded_nutrition_info?.calories} cal</div>` : ''}
 									</div>`).join('')}
 									</div>
 									</div>`).join('');
@@ -170,12 +188,14 @@ async function getMenuDataAndRender() {
 	let menuJson = await response.json()
 	let menuData = menuJson.data;
 
+	menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
+
 	console.log(menuData);
 	console.log(menuData.active_menu_types[0].data);
 
 	let dates = menuData.active_menu_types[0].data.days.map(d => d.date);
 
-	// selectedDayIndex = getTodayIndex(dates);
+	selectedDayIndex = getTodayIndex(dates);
 
 	renderStatus(menuData, dates);
 	renderTabs(menuData, dates);
