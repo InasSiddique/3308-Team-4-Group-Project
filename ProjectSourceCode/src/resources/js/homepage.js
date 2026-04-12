@@ -5,210 +5,274 @@ const MONTH_NAMES_LONG = ['January', 'February', 'March', 'April', 'May', 'June'
 
 // menus to ignore.
 const BLACKLISTED_MENUS = ["c4c-meal-of-the-day"]
+// food categories to ignore
+const BLACKLISTED_CATEGORIES = ['condiment']
 
 // ── state ──
 // selectedTabIndex of -1 means the ALL tab
 let selectedTabIndex = -1;
 let selectedDayIndex = 0;
 
+let targetDate = new Date()
+
 function getTodayIndex(dates) {
-	const today = new Date();
-	today.setHours(12, 0, 0, 0);
-	for (let i = 0; i < dates.length; i++) {
-		if (new Date(dates[i] + 'T12:00:00').toDateString() === today.toDateString()) return i;
-	}
-	return 0;
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  for (let i = 0; i < dates.length; i++) {
+    if (new Date(dates[i] + 'T12:00:00').toDateString() === today.toDateString()) return i;
+  }
+  return 0;
 }
 
 function fmtTime(t) {
-	const [h, m] = t.split(':').map(Number);
-	const ampm = h >= 12 ? 'PM' : 'AM';
-	const hr = h % 12 || 12;
-	return m === 0 ? `${hr} ${ampm}` : `${hr}:${String(m).padStart(2, '0')} ${ampm}`;
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 || 12;
+  return m === 0 ? `${hr} ${ampm}` : `${hr}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
 function isOpenNow(dayKey, menuData) {
-	console.log("dk: " + dayKey)
-	const h = {
-		"enabled": menuData[dayKey + "_enabled"],
-		"start": menuData[dayKey + "_start"],
-		"end": menuData[dayKey + "_end"],
-	}
-	if (!h || !h.enabled) return false;
-	const now = new Date();
-	const [sh, sm] = h.start.split(':').map(Number);
-	const [eh, em] = h.end.split(':').map(Number);
-	const mins = now.getHours() * 60 + now.getMinutes();
-	return mins >= sh * 60 + sm && mins < eh * 60 + em;
+  const h = {
+    "enabled": menuData[dayKey + "_enabled"],
+    "start": menuData[dayKey + "_start"],
+    "end": menuData[dayKey + "_end"],
+  }
+  if (!h || !h.enabled) return false;
+  const now = new Date();
+  const [sh, sm] = h.start.split(':').map(Number);
+  const [eh, em] = h.end.split(':').map(Number);
+  const mins = now.getHours() * 60 + now.getMinutes();
+  return mins >= sh * 60 + sm && mins < eh * 60 + em;
 }
 
 // ── status badge ──
 function renderStatus(menuData, dates) {
-	const d = new Date(dates[selectedDayIndex] + 'T12:00:00');
-	const dayKey = DAY_KEYS[d.getDay()];
-	const h = {
-		"enabled": menuData[dayKey + "_enabled"],
-		"start": menuData[dayKey + "_start"],
-		"end": menuData[dayKey + "_end"],
-	}
-	// menuData.hours[dayKey];
+  const d = new Date(dates[selectedDayIndex] + 'T12:00:00');
+  const dayKey = DAY_KEYS[d.getDay()];
+  const h = {
+    "enabled": menuData[dayKey + "_enabled"],
+    "start": menuData[dayKey + "_start"],
+    "end": menuData[dayKey + "_end"],
+  }
+  // menuData.hours[dayKey];
 
-	const badge = document.getElementById('statusBadge');
-	const isToday = selectedDayIndex === getTodayIndex(dates);
-	const open = isToday && isOpenNow(dayKey, menuData);
-	badge.textContent = h && h.enabled ? ((h.start ? fmtTime(h.start) + ' – ' + fmtTime(h.end) : 'Closed')) : "Closed";
-	badge.style.background = open ? '#2a6e2a' : '#b85c00';
+  const badge = document.getElementById('statusBadge');
+  const isToday = selectedDayIndex === getTodayIndex(dates);
+  const open = isToday && isOpenNow(dayKey, menuData);
+  badge.textContent = h && h.enabled ? ((h.start ? fmtTime(h.start) + ' – ' + fmtTime(h.end) : 'Closed')) : "Closed";
+  badge.style.background = open ? '#2a6e2a' : '#b85c00';
 
-	const openBadge = document.getElementById('openNowBadge');
-	openBadge.style.display = open ? "block" : "none";
-	openBadge.style.background = open ? "#2a6e2a" : "#b85c00";
+  const openBadge = document.getElementById('openNowBadge');
+  openBadge.style.display = open ? "block" : "none";
+  openBadge.style.background = open ? "#2a6e2a" : "#b85c00";
 }
 
 // ── tabs ──
 function renderTabs(menuData, dates) {
-	const el = document.getElementById('stationTabs');
-	el.innerHTML = '';
-	// ensure we are copying the array
-	const tabs = menuData.active_menu_types.map(e => e);
-	tabs.unshift({ name: "All" })
+  const el = document.getElementById('stationTabs');
+  el.innerHTML = '';
+  // ensure we are copying the array
+  const tabs = menuData.active_menu_types.map(e => e);
+  tabs.unshift({ name: "All" })
 
-	// assign All tab an index of -1.
-	tabs.forEach((mt, i) => {
-		const btn = document.createElement('button');
-		btn.className = 'tab' + (i - 1 === selectedTabIndex ? ' active' : '');
-		btn.setAttribute('role', 'tab');
-		btn.setAttribute('aria-selected', i - 1 === selectedTabIndex ? 'true' : 'false');
-		btn.textContent = mt.name;
-		btn.addEventListener('click', () => {
-			selectedTabIndex = i - 1;
-			renderTabs(menuData, dates); renderWeekHeader(menuData, dates); renderMenu(menuData);
-		});
-		el.appendChild(btn);
-	});
+  // assign All tab an index of -1.
+  tabs.forEach((mt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i - 1 === selectedTabIndex ? ' active' : '');
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', i - 1 === selectedTabIndex ? 'true' : 'false');
+    btn.textContent = mt.name;
+    btn.addEventListener('click', () => {
+      selectedTabIndex = i - 1;
+      renderTabs(menuData, dates); renderWeekHeader(menuData, dates); renderMenu(menuData);
+    });
+    el.appendChild(btn);
+  });
 }
 
 // ── week header ──
 function renderWeekHeader(menuData, dates) {
-	const el = document.getElementById('weekHeader');
-	el.innerHTML = '';
+  const el = document.getElementById('weekHeader');
+  el.innerHTML = '';
 
-	// Date range label
-	const s = new Date(dates[0] + 'T12:00:00'), e = new Date(dates[6] + 'T12:00:00');
-	document.getElementById('dateRangeLabel').textContent =
-		`${MONTH_NAMES[s.getMonth()]} ${s.getDate()}, ${s.getFullYear()} – ${MONTH_NAMES[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()}`;
+  // Date range label
+  const s = new Date(dates[0] + 'T12:00:00'), e = new Date(dates[6] + 'T12:00:00');
+  document.getElementById('dateRangeLabel').textContent =
+    `${MONTH_NAMES[s.getMonth()]} ${s.getDate()}, ${s.getFullYear()} – ${MONTH_NAMES[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()}`;
 
-	dates.forEach((dateStr, i) => {
-		const d = new Date(dateStr + 'T12:00:00');
-		// const mt = menuData.active_menu_types[selectedTabIndex].data;
-		// const hasItems = mt.days[i].stations.some(s => s.items.length > 0);
+  dates.forEach((dateStr, i) => {
+    const d = new Date(dateStr + 'T12:00:00');
+    // const mt = menuData.active_menu_types[selectedTabIndex].data;
+    // const hasItems = mt.days[i].stations.some(s => s.items.length > 0);
 
-		const btn = document.createElement('button');
-		btn.className = 'day-col' + (i === selectedDayIndex ? ' active' : '') // + (!hasItems ? ' no-menu' : '');
-		btn.setAttribute('aria-pressed', i === selectedDayIndex ? 'true' : 'false');
-		btn.setAttribute('aria-label', `${DAY_NAMES[d.getDay()]} ${MONTH_NAMES_LONG[d.getMonth()]} ${d.getDate()}`);
-		btn.innerHTML = `
+    const btn = document.createElement('button');
+    btn.className = 'day-col' + (i === selectedDayIndex ? ' active' : '') // + (!hasItems ? ' no-menu' : '');
+    btn.setAttribute('aria-pressed', i === selectedDayIndex ? 'true' : 'false');
+    btn.setAttribute('aria-label', `${DAY_NAMES[d.getDay()]} ${MONTH_NAMES_LONG[d.getMonth()]} ${d.getDate()}`);
+    btn.innerHTML = `
 							<div class="day-name">${DAY_NAMES[d.getDay()]}</div>
 							<div class="day-num-wrap"><div class="day-num">${d.getDate()}</div></div>`;
-		btn.addEventListener('click', () => {
-			selectedDayIndex = i;
-			// Update date input display
-			const sd = new Date(dates[i] + 'T12:00:00');
-			document.getElementById('selectedDateDisplay').textContent =
-				`${sd.getMonth() + 1}/${sd.getDate()}/${sd.getFullYear()}`;
-			renderWeekHeader(menuData, dates); renderMenu(menuData); renderStatus(menuData, dates);
-		});
-		el.appendChild(btn);
-	});
+    btn.addEventListener('click', () => {
+      selectedDayIndex = i;
+      // Update date input display
+      const sd = new Date(dates[i] + 'T12:00:00');
+      document.getElementById('selectedDateDisplay').textContent =
+        `${sd.getMonth() + 1}/${sd.getDate()}/${sd.getFullYear()}`;
+      renderWeekHeader(menuData, dates); renderMenu(menuData); renderStatus(menuData, dates);
+    });
+    el.appendChild(btn);
+  });
 
-	// Init date display
-	const sd = new Date(dates[selectedDayIndex] + 'T12:00:00');
-	document.getElementById('selectedDateDisplay').textContent =
-		`${sd.getMonth() + 1}/${sd.getDate()}/${sd.getFullYear()}`;
+  // Init date display
+  const sd = new Date(dates[selectedDayIndex] + 'T12:00:00');
+  document.getElementById('selectedDateDisplay').textContent =
+    `${sd.getMonth() + 1}/${sd.getDate()}/${sd.getFullYear()}`;
 }
 
 // ── tags ──
 const ALLERGENS = new Set(['Milk', 'Egg', 'Wheat', 'Soy', 'Peanuts', 'Tree Nuts', 'Sesame', 'Shellfish', 'Fish', 'Gluten']);
 function tagsHTML(icons) {
-	if (icons == undefined) return "";
+  if (icons == undefined) return "";
 
-	return icons.map(icon => {
-		if (icon.name === 'Vegan') return `<span class="tag tag-vegan">Vegan</span>`;
-		if (icon.name === 'Vegetarian') return `<span class="tag tag-veg">Vegetarian</span>`;
-		// if (icon.name === 'Smart Pick' || icon.name === "Dietitian's Pick") return `<span class="tag tag-smart">✦ Smart Pick</span>`;
-		if (icon.name === 'Pork') return `<span class="tag tag-pork">Pork</span>`;
-		if (ALLERGENS.has(icon.name)) return `<span class="tag tag-allergen">${icon.name}</span>`;
-		return '';
-	}).join('');
+  return icons.map(icon => {
+    if (icon.name === 'Vegan') return `<span class="tag tag-vegan">Vegan</span>`;
+    if (icon.name === 'Vegetarian') return `<span class="tag tag-veg">Vegetarian</span>`;
+    // if (icon.name === 'Smart Pick' || icon.name === "Dietitian's Pick") return `<span class="tag tag-smart">✦ Smart Pick</span>`;
+    if (icon.name === 'Pork') return `<span class="tag tag-pork">Pork</span>`;
+    if (ALLERGENS.has(icon.name)) return `<span class="tag tag-allergen">${icon.name}</span>`;
+    return '';
+  }).join('');
 }
 
-// ── menu ──
+function createElement(element, elementClass, innerHTML = "") {
+  let elt = document.createElement(element);
+  elt.className = elementClass;
+  elt.innerHTML = innerHTML;
+  return elt;
+}
+
+function createFoodItem(food) {
+  let foodItem = createElement('div', 'food-item');
+  let foodItemLeft = createElement('div', 'food-item-left');
+  foodItem.appendChild(foodItemLeft);
+
+  foodItemLeft.appendChild(createElement('div', 'food-name', food?.name))
+  foodItemLeft.appendChild(createElement('div', 'food-tags', tagsHTML(food?.icons?.food_icons)))
+
+  foodItem.appendChild(createElement('div', 'food-calories', food?.rounded_nutrition_info?.calories))
+
+  return foodItem;
+}
+
+function createSection(name) {
+  let section = createElement('div', 'station-section');
+  let header = createElement('div', 'station-section-name active', name);
+  let collapse = createElement('div', 'station-section-content');
+
+  header.addEventListener('click', () => {
+    collapse.classList.toggle('collapsed');
+    header.classList.toggle('active');
+  });
+
+  section.appendChild(header);
+  section.appendChild(collapse);
+
+  return section;
+}
+
 function renderMenu(menuData) {
-	const el = document.getElementById('menuContent');
-	const stations = selectedTabIndex <= -1 ? menuData.active_menu_types : [menuData.active_menu_types[selectedTabIndex]];
-	// const day = mt.days[selectedDayIndex];
-	// const stations = [day] //.stations.filter(s => s.items.length > 0);
+  const el = document.getElementById('menuContent');
+  el.innerHTML = "";
+  const stations = selectedTabIndex <= -1 ? menuData.active_menu_types : [menuData.active_menu_types[selectedTabIndex]];
+  // const day = mt.days[selectedDayIndex];
+  // const stations = [day] //.stations.filter(s => s.items.length > 0);
+  for (let station of stations) {
+    let stationBlock = createElement('div', 'station-block')
+    stationBlock.appendChild(createElement('div', 'station-name', station.name))
 
-	if (!stations.length) {
-		el.innerHTML = `
-										<div class="empty-state" role="status" aria-live="polite">
-										<div class="empty-icon" aria-hidden="true">
-										<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A2A4A3" stroke-width="1.5">
-										<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
-										<line x1="10" y1="11" x2="10" y2="17"/>
-										<line x1="14" y1="11" x2="14" y2="17"/>
-										</svg>
-										</div>
-										<p>No menu available for this day</p>
-										<span>Check back closer to the service date or select another day</span>
-										</div>`;
-		return;
-	}
+    let stationItems = createElement('div', 'station-items');
 
-	el.innerHTML = stations.map(station => `
-									<div class="station-block">
-									<div class="station-name">${station.name}</div>
-									<div class="station-items">
-									${station.data.days[selectedDayIndex].menu_items.map(item => `
-									<div class="food-item">
-									<div class="food-item-left">
-									<div class="food-name">${item.food?.name}</div>
-									<div class="food-tags">${tagsHTML(item.food?.icons?.food_icons)}</div>
-									</div>
-									${item.cal ? `<div class="food-calories">${item.food?.rounded_nutrition_info?.calories} cal</div>` : ''}
-									</div>`).join('')}
-									</div>
-									</div>`).join('');
+    let section = null;
+    let sectionCollapse = null;
+    // keep track of empty sections to avoid adding
+    let sectionHasChildren = false;
+
+    for (let item of station.data.days[selectedDayIndex].menu_items) {
+      if (BLACKLISTED_CATEGORIES.includes(item.category)) continue;
+
+      if (item.is_section_title) {
+        if (section != null && sectionHasChildren) {
+          stationBlock.appendChild(section);
+        }
+        section = createSection(item.text);
+        sectionCollapse = section.lastElementChild;
+        sectionHasChildren = false;
+        continue;
+      }
+
+      if (item.food == null) continue;
+
+      console.log(item.category);
+
+      let parent = section != null ? sectionCollapse : stationItems;
+      if (section) sectionHasChildren = true;
+      parent.appendChild(createFoodItem(item.food));
+    }
+
+    stationBlock.appendChild(stationItems);
+
+    el.appendChild(stationBlock);
+  }
+
+  return;
+
+  el.innerHTML = stations.map(station => `
+    <div class="station-block">
+    <div class="station-name">${station.name}</div>
+    <div class="station-items">
+    ${station.data.days[selectedDayIndex].menu_items.map(item => `
+    <div class="food-item">
+    <div class="food-item-left">
+    <div class="food-name">${item.food?.name}</div>
+    <div class="food-tags">${tagsHTML(item.food?.icons?.food_icons)}</div>
+    </div>
+    ${item.cal ? `<div class="food-calories">${item.food?.rounded_nutrition_info?.calories} cal</div>` : ''}
+    </div>`).join('')}
+    </div>
+    </div>`).join('');
 }
 
-async function getMenuDataAndRender() {
-	const response = await fetch("/getWeeklyMenu?" + new URLSearchParams({ location: "center-for-community" }), {
-		method: "GET",
-	});
+async function getMenuDataAndRender(date) {
+  const response = await fetch("/getWeeklyMenu?" + new URLSearchParams({ location: "center-for-community", date: date }), {
+    method: "GET",
+  });
 
-	let menuJson = await response.json()
-	let menuData = menuJson.data;
+  let menuJson = await response.json()
+  let menuData = menuJson.data;
 
-	menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
+  menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
 
-	console.log(menuData);
-	console.log(menuData.active_menu_types[0].data);
+  console.log(menuData);
+  console.log(menuData.active_menu_types[0].data);
 
-	let dates = menuData.active_menu_types[0].data.days.map(d => d.date);
+  let dates = menuData.active_menu_types[0].data.days.map(d => d.date);
 
-	selectedDayIndex = getTodayIndex(dates);
+  selectedDayIndex = getTodayIndex(dates);
 
-	renderStatus(menuData, dates);
-	renderTabs(menuData, dates);
-	renderWeekHeader(menuData, dates);
-	renderMenu(menuData);
+  renderStatus(menuData, dates);
+  renderTabs(menuData, dates);
+  renderWeekHeader(menuData, dates);
+  renderMenu(menuData);
 }
 
 // ── init ──
-getMenuDataAndRender();
+getMenuDataAndRender(targetDate);
 
 document.getElementById('prevWeek').addEventListener('click', () => {
-	alert('Navigation to other weeks requires a live API connection.');
+  targetDate.setDate(targetDate.getDate() - 7);
+  getMenuDataAndRender(targetDate);
 });
 document.getElementById('nextWeek').addEventListener('click', () => {
-	alert('Navigation to other weeks requires a live API connection.');
+  targetDate.setDate(targetDate.getDate() - 7);
+  getMenuDataAndRender(targetDate);
 });
