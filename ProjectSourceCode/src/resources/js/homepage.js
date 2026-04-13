@@ -1,3 +1,5 @@
+const CACHE_NAME = "cache-v1"
+
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -226,17 +228,45 @@ function renderMenu() {
 }
 
 async function getLocationsAndRender() {
-  const response = await fetch("/getLocations", { method: "GET" });
-  let locationsData = (await response.json()).data;
+  let locationsData = await fetchWithCache("/getLocations", { method: "GET" });
   console.log(locationsData);
 }
 
-async function getMenuDataAndRender(date) {
-  const response = await fetch("/getWeeklyMenu?" + new URLSearchParams({ location: "center-for-community", date: date }), {
-    method: "GET",
+async function fetchWithCache(url, options) {
+  let cache = await caches.open(CACHE_NAME);
+
+  let cacheResponse = await cache.match(url + ".json");
+  let cacheJson = await cacheResponse?.json();
+
+  if (cacheJson) {
+    console.log(`Fetched data for ${url} from cache`)
+    return cacheJson;
+  }
+
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new TypeError("bad response");
+  }
+
+  let responseJson = await response.json();
+  const jsonResponse = new Response(JSON.stringify(responseJson), {
+    headers: { 'content-type': 'application/json' }
   });
 
-  let menuJson = await response.json()
+  await cache.put(`${url}.json`, jsonResponse);
+
+  return responseJson;
+}
+
+async function getMenuDataAndRender(date) {
+  // round date to nearest day to help cache requests
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  let menuJson = await fetchWithCache("/getWeeklyMenu?" + new URLSearchParams({ location: "center-for-community", date: date }), {
+    method: "GET",
+  })
   menuData = menuJson.data;
 
   menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
@@ -263,6 +293,6 @@ document.getElementById('prevWeek').addEventListener('click', () => {
   getMenuDataAndRender(targetDate);
 });
 document.getElementById('nextWeek').addEventListener('click', () => {
-  targetDate.setDate(targetDate.getDate() - 7);
+  targetDate.setDate(targetDate.getDate() + 7);
   getMenuDataAndRender(targetDate);
 });
