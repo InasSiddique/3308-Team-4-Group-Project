@@ -4,18 +4,20 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 const MONTH_NAMES_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // menus to ignore.
-const BLACKLISTED_MENUS = ["c4c-meal-of-the-day"]
+const BLACKLISTED_MENUS = ["c4c-meal-of-the-day", 'vc-meal-of-the-day']
 // food categories to ignore
-const BLACKLISTED_CATEGORIES = ['condiment']
+const BLACKLISTED_CATEGORIES = ['condiment', 'fruit', 'snack', 'salad', 'other', 'grain', 'beverage']
 
 // ── state ──
+let menuData = null;
+let dates = null;
 // selectedTabIndex of -1 means the ALL tab
 let selectedTabIndex = -1;
 let selectedDayIndex = 0;
 
 let targetDate = new Date()
 
-function getTodayIndex(dates) {
+function getTodayIndex() {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
   for (let i = 0; i < dates.length; i++) {
@@ -31,7 +33,7 @@ function fmtTime(t) {
   return m === 0 ? `${hr} ${ampm}` : `${hr}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-function isOpenNow(dayKey, menuData) {
+function isOpenNow(dayKey) {
   const h = {
     "enabled": menuData[dayKey + "_enabled"],
     "start": menuData[dayKey + "_start"],
@@ -46,7 +48,7 @@ function isOpenNow(dayKey, menuData) {
 }
 
 // ── status badge ──
-function renderStatus(menuData, dates) {
+function renderStatus() {
   const d = new Date(dates[selectedDayIndex] + 'T12:00:00');
   const dayKey = DAY_KEYS[d.getDay()];
   const h = {
@@ -57,8 +59,8 @@ function renderStatus(menuData, dates) {
   // menuData.hours[dayKey];
 
   const badge = document.getElementById('statusBadge');
-  const isToday = selectedDayIndex === getTodayIndex(dates);
-  const open = isToday && isOpenNow(dayKey, menuData);
+  const isToday = selectedDayIndex === getTodayIndex();
+  const open = isToday && isOpenNow(dayKey);
   badge.textContent = h && h.enabled ? ((h.start ? fmtTime(h.start) + ' – ' + fmtTime(h.end) : 'Closed')) : "Closed";
   badge.style.background = open ? '#2a6e2a' : '#b85c00';
 
@@ -68,7 +70,7 @@ function renderStatus(menuData, dates) {
 }
 
 // ── tabs ──
-function renderTabs(menuData, dates) {
+function renderTabs() {
   const el = document.getElementById('stationTabs');
   el.innerHTML = '';
   // ensure we are copying the array
@@ -84,14 +86,14 @@ function renderTabs(menuData, dates) {
     btn.textContent = mt.name;
     btn.addEventListener('click', () => {
       selectedTabIndex = i - 1;
-      renderTabs(menuData, dates); renderWeekHeader(menuData, dates); renderMenu(menuData);
+      renderTabs(); renderWeekHeader(); renderMenu();
     });
     el.appendChild(btn);
   });
 }
 
 // ── week header ──
-function renderWeekHeader(menuData, dates) {
+function renderWeekHeader() {
   const el = document.getElementById('weekHeader');
   el.innerHTML = '';
 
@@ -118,7 +120,7 @@ function renderWeekHeader(menuData, dates) {
       const sd = new Date(dates[i] + 'T12:00:00');
       document.getElementById('selectedDateDisplay').textContent =
         `${sd.getMonth() + 1}/${sd.getDate()}/${sd.getFullYear()}`;
-      renderWeekHeader(menuData, dates); renderMenu(menuData); renderStatus(menuData, dates);
+      renderWeekHeader(); renderMenu(); renderStatus();
     });
     el.appendChild(btn);
   });
@@ -171,7 +173,7 @@ function createSection(name) {
 
   header.addEventListener('click', () => {
     collapse.classList.toggle('collapsed');
-    header.classList.toggle('active');
+    header.classList.toggle('collapse-active');
   });
 
   section.appendChild(header);
@@ -180,7 +182,7 @@ function createSection(name) {
   return section;
 }
 
-function renderMenu(menuData) {
+function renderMenu() {
   const el = document.getElementById('menuContent');
   el.innerHTML = "";
   const stations = selectedTabIndex <= -1 ? menuData.active_menu_types : [menuData.active_menu_types[selectedTabIndex]];
@@ -212,8 +214,6 @@ function renderMenu(menuData) {
 
       if (item.food == null) continue;
 
-      console.log(item.category);
-
       let parent = section != null ? sectionCollapse : stationItems;
       if (section) sectionHasChildren = true;
       parent.appendChild(createFoodItem(item.food));
@@ -223,23 +223,12 @@ function renderMenu(menuData) {
 
     el.appendChild(stationBlock);
   }
+}
 
-  return;
-
-  el.innerHTML = stations.map(station => `
-    <div class="station-block">
-    <div class="station-name">${station.name}</div>
-    <div class="station-items">
-    ${station.data.days[selectedDayIndex].menu_items.map(item => `
-    <div class="food-item">
-    <div class="food-item-left">
-    <div class="food-name">${item.food?.name}</div>
-    <div class="food-tags">${tagsHTML(item.food?.icons?.food_icons)}</div>
-    </div>
-    ${item.cal ? `<div class="food-calories">${item.food?.rounded_nutrition_info?.calories} cal</div>` : ''}
-    </div>`).join('')}
-    </div>
-    </div>`).join('');
+async function getLocationsAndRender() {
+  const response = await fetch("/getLocations", { method: "GET" });
+  let locationsData = (await response.json()).data;
+  console.log(locationsData);
 }
 
 async function getMenuDataAndRender(date) {
@@ -248,24 +237,25 @@ async function getMenuDataAndRender(date) {
   });
 
   let menuJson = await response.json()
-  let menuData = menuJson.data;
+  menuData = menuJson.data;
 
   menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
 
   console.log(menuData);
   console.log(menuData.active_menu_types[0].data);
 
-  let dates = menuData.active_menu_types[0].data.days.map(d => d.date);
+  dates = menuData.active_menu_types[0].data.days.map(d => d.date);
 
-  selectedDayIndex = getTodayIndex(dates);
+  selectedDayIndex = getTodayIndex();
 
-  renderStatus(menuData, dates);
-  renderTabs(menuData, dates);
-  renderWeekHeader(menuData, dates);
-  renderMenu(menuData);
+  renderStatus();
+  renderTabs();
+  renderWeekHeader();
+  renderMenu();
 }
 
 // ── init ──
+getLocationsAndRender();
 getMenuDataAndRender(targetDate);
 
 document.getElementById('prevWeek').addEventListener('click', () => {
