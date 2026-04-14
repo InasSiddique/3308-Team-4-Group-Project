@@ -243,6 +243,7 @@ async function getLocationsAndRender() {
       locationSlug = location.slug;
       getMenuDataAndRender(targetDate);
       locationSelect.classList.add("d-none");
+      document.getElementById("location-header").classList.remove("open");
       document.getElementById("location-header").innerText = location.name;
     };
 
@@ -317,4 +318,5 @@ document.getElementById('nextWeek').addEventListener('click', () => {
 
 document.getElementById("location-header").addEventListener('click', () => {
   document.getElementById("location-select").classList.toggle("d-none");
+  document.getElementById("location-header").classList.toggle("open");
 })

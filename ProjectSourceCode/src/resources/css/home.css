@@ -175,3 +175,16 @@
   overflow-y: auto;
   width: 25%;
 }
+
+
+.buffbites-title:after {
+  content: '🞃';
+  /* Unicode character for "plus" sign (+) */
+  font-size: 18px;
+  color: white;
+  margin-left: 5px;
+}
+
+.buffbites-title.open:after {
+  content: '🞁';
+}
