@@ -146,8 +146,51 @@ app.get('/profile', async (req, res) => {
     if (!user) {
       return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
     }
+
     const favorites = await db.any('SELECT * FROM favorites WHERE user_id = $1 ORDER BY meal_type, item_name', [req.session.user.id]);
-    res.status(200).render('pages/profile', { user, favorites });
+
+    let notifications = [];
+    if (favorites.length > 0) {
+      try {
+        const locResponse = await fetch(NUTRISLICE_LOCATIONS_ENDPOINT);
+        const locations = await locResponse.json();
+
+        const locationsToCheck = locations.slice(0, 3);
+
+        for (const location of locationsToCheck) {
+          const menuType = location.active_menu_types?.[0];
+          if (!menuType) continue;
+
+          const today = new Date();
+          let url = menuType.urls.digest_menu_by_week_api_url_template
+            .replace('{year}', today.getFullYear())
+            .replace('{month}', (today.getMonth() + 1).toString().padStart(2, '0'))
+            .replace('{day}', today.getDate().toString().padStart(2, '0'));
+
+          const menuResponse = await fetch(NUTRISLICE_URL + url);
+          const menuData = await menuResponse.json();
+
+          const menuItems = menuData?.days?.flatMap(day =>
+            day?.menu_items?.map(item => item?.food_item?.name?.toLowerCase()) ?? []
+          ) ?? [];
+
+          for (const fav of favorites) {
+            const match = menuItems.some(item => item?.includes(fav.item_name.toLowerCase()));
+            if (match) {
+              notifications.push({
+                item_name: fav.item_name,
+                meal_type: fav.meal_type,
+                location: location.name
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Notification check failed:', err);
+      }
+    }
+
+    res.status(200).render('pages/profile', { user, favorites, notifications });
   } catch (err) {
     console.error(err);
     res.status(400).render('pages/profile', { message: 'Something went wrong.', error: true });
