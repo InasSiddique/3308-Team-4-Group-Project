@@ -244,7 +244,6 @@ async function getLocationsAndRender() {
       getMenuDataAndRender(targetDate);
       locationSelect.classList.add("d-none");
       document.getElementById("location-header").classList.remove("open");
-      document.getElementById("location-header").innerText = location.name;
     };
 
     locationSelect.appendChild(btn);
@@ -277,16 +276,34 @@ async function fetchWithCache(url, options) {
   return responseJson;
 }
 
+function updateUrlWithLocation() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("location", locationSlug);
+
+  history.pushState({}, '', url);
+}
+
+function loadQueryParams() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("location")) return;
+  locationSlug = url.searchParams.get("location");
+}
+
 async function getMenuDataAndRender(date) {
   // round date to nearest day to help cache requests
   date.setHours(0);
   date.setMinutes(0);
   date.setSeconds(0);
   date.setMilliseconds(0);
+
+  updateUrlWithLocation();
+
   let menuJson = await fetchWithCache("/getWeeklyMenu?" + new URLSearchParams({ location: locationSlug, date: date }), {
     method: "GET",
   })
   menuData = menuJson.data;
+
+  document.getElementById("location-header").innerText = menuData.name;
 
   menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
 
@@ -304,6 +321,7 @@ async function getMenuDataAndRender(date) {
 }
 
 // ── init ──
+loadQueryParams();
 getLocationsAndRender();
 getMenuDataAndRender(targetDate);
 
