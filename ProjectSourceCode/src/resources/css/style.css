@@ -1,3 +1,23 @@
+
+/* styling for register page */
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: #A2A4A3;
+}
+.btn-cu {
+  background-color: #CFB87C;
+  color: black;
+}
+
+.btn-cu:hover {
+background-color: #bfa56a; 
+color: black; 
+}
+.form-error {
+  color: #bf1c04
+}
+
+
 /* General page styling */
 body {
   background-color: #A2A4A3; /* CU Light Grey */
