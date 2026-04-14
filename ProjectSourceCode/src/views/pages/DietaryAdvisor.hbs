@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dietary Advisor</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<style>
+:root {
+  --cu-gold: #CFB87C;
+  --cu-black: #000;
+  --cu-dark-grey: #565A5C;
+  --cu-light-grey: #A2A4A3;
+}
+
+/* Base */
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", sans-serif;
+  background: #f5f5f3;
+}
+
+/* NAVBAR */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--cu-black);
+  padding: 12px 20px;
+}
+
+.logo-text {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.logo-text .campus {
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.gold-bar {
+  height: 4px;
+  background: var(--cu-gold);
+}
+
+/* HERO */
+.hero {
+  background: var(--cu-black);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.hero span {
+  color: var(--cu-gold);
+}
+
+/* CONTENT */
+.menu-content {
+  padding: 30px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+/* FILTER BAR */
+.filter-bar {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0px 3px 8px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+select {
+  padding: 6px;
+}
+
+.filter-btn {
+  background: var(--cu-gold);
+  border: none;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-btn:hover {
+  background: #bfa56a;
+}
+
+/* RESULTS */
+.results-title {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* MEAL CARDS */
+.food-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  background: white;
+  transition: 0.2s;
+}
+
+.food-item:hover {
+  background: #fafaf8;
+}
+
+.food-name {
+  font-weight: 600;
+}
+
+.food-location {
+  font-size: 12px;
+  color: var(--cu-dark-grey);
+}
+
+/* TAGS */
+.tags {
+  margin-top: 4px;
+}
+
+.tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-right: 4px;
+}
+
+.tag-vegan { background: #e6f4ea; color: #2e7d32; }
+.tag-veg { background: #edf5e6; color: #388e3c; }
+.tag-allergen { background: #fce8e8; color: #c62828; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--cu-dark-grey);
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+  <div class="logo-text">
+    <img src="../../resources/img/BuffBitesLogo.png" height="40">
+  </div>
+</nav>
+<div class="gold-bar"></div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Dietary <span>Advisor</span></h1>
+  <p>Find meals that match your dietary needs</p>
+</div>
+
+<!-- CONTENT -->
+<div class="menu-content">
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <div class="filter-row">
+
+      <div class="filter-group">
+        <label>Diet Type</label>
+        <select id="diet">
+          <option value="none">No Preference</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+          <option value="keto">Keto</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Allergies</label>
+        <select id="diet">
+          <option value="none">No Allergies</option>
+          <option value="vegetarian">Nuts</option>
+          <option value="vegan">Dairy</option>
+          <option value="keto">Gluten</option>
+        </select>
+      </div>
+
+
+      <button class="filter-btn" onclick="filterMeals()">Find Meals</button>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-title">Available Meals</div>
+  <div id="results"></div>
+
+</div>
+
+  
+
+</html>
