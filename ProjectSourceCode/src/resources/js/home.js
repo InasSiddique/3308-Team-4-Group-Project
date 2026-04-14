@@ -16,6 +16,7 @@ let dates = null;
 // selectedTabIndex of -1 means the ALL tab
 let selectedTabIndex = -1;
 let selectedDayIndex = 0;
+let locationSlug = "center-for-community";
 
 let targetDate = new Date()
 
@@ -229,7 +230,24 @@ function renderMenu() {
 
 async function getLocationsAndRender() {
   let locationsData = await fetchWithCache("/getLocations", { method: "GET" });
-  console.log(locationsData);
+
+  let locationSelect = document.getElementById("location-select");
+  locationSelect.innerHTML = "";
+
+  for (let location of locationsData.data) {
+    let btn = document.createElement('button');
+    btn.classList.add('w-100')
+    btn.innerText = location.name;
+
+    btn.onclick = () => {
+      locationSlug = location.slug;
+      getMenuDataAndRender(targetDate);
+      locationSelect.classList.add("d-none");
+      document.getElementById("location-header").innerText = location.name;
+    };
+
+    locationSelect.appendChild(btn);
+  }
 }
 
 async function fetchWithCache(url, options) {
@@ -264,7 +282,7 @@ async function getMenuDataAndRender(date) {
   date.setMinutes(0);
   date.setSeconds(0);
   date.setMilliseconds(0);
-  let menuJson = await fetchWithCache("/getWeeklyMenu?" + new URLSearchParams({ location: "center-for-community", date: date }), {
+  let menuJson = await fetchWithCache("/getWeeklyMenu?" + new URLSearchParams({ location: locationSlug, date: date }), {
     method: "GET",
   })
   menuData = menuJson.data;
@@ -296,3 +314,7 @@ document.getElementById('nextWeek').addEventListener('click', () => {
   targetDate.setDate(targetDate.getDate() + 7);
   getMenuDataAndRender(targetDate);
 });
+
+document.getElementById("location-header").addEventListener('click', () => {
+  document.getElementById("location-select").classList.toggle("d-none");
+})
