@@ -338,3 +338,26 @@ document.getElementById("location-header").addEventListener('click', () => {
   document.getElementById("location-select").classList.toggle("d-none");
   document.getElementById("location-header").classList.toggle("open");
 })
+
+function filterItems(name) {
+  let foodItems = document.getElementsByClassName('food-item');
+
+  for (let foodItem of foodItems) {
+    let foodName = foodItem.querySelector(".food-name");
+
+    let foodText = foodName.textContent.toLowerCase();
+    let nameLower = name.toLowerCase();
+
+    let match = foodText.includes(nameLower);
+
+    if (match) {
+      foodItem.classList.remove('d-none');
+    } else {
+      foodItem.classList.add('d-none');
+    }
+  }
+}
+
+document.getElementById("item-search").addEventListener('input', (event) => {
+  filterItems(event.target.value);
+})

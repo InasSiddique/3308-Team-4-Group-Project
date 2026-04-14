@@ -28,6 +28,11 @@
   overflow: hidden;
 }
 
+/* complicated way to hide empty station-sections with css */
+.station-section:not(:has(.station-section-content .food-item:not(.d-none))) {
+  display: none;
+}
+
 .station-section-name {
   display: flex;
   align-items: flex-start;
