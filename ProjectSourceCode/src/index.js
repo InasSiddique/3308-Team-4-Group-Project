@@ -83,7 +83,7 @@ app.use(express.static(__dirname + '/'));
 // TODO - Include your API routes here
 // GET / - redirect to login
 app.get('/', (req, res) => {
-	res.redirect('/login');
+	res.redirect('/home');
 });
 
 // GET /login
@@ -147,10 +147,7 @@ app.get('/logout', (req, res) => {
 
 // GET /home
 app.get('/home', (req, res) => {
-	if (!req.session.user) {
-		return res.redirect('/login');
-	}
-	res.render('pages/home', { user: req.session.user });
+    res.render('pages/home', { user: req.session.user || null });
 });
 
 // *****************************************************
