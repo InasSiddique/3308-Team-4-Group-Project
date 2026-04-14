@@ -4,3 +4,11 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS favorites (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  item_name VARCHAR(255) NOT NULL,
+  meal_type VARCHAR(50),
+  UNIQUE(user_id, item_name)
+);

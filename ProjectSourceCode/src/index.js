@@ -146,10 +146,41 @@ app.get('/profile', async (req, res) => {
     if (!user) {
       return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
     }
-    res.status(200).render('pages/profile', { user });
+    const favorites = await db.any('SELECT * FROM favorites WHERE user_id = $1 ORDER BY meal_type, item_name', [req.session.user.id]);
+    res.status(200).render('pages/profile', { user, favorites });
   } catch (err) {
     console.error(err);
     res.status(400).render('pages/profile', { message: 'Something went wrong.', error: true });
+  }
+});
+
+// POST /favorites/add
+app.post('/favorites/add', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  const { item_name, meal_type } = req.body;
+  try {
+    await db.none('INSERT INTO favorites (user_id, item_name, meal_type) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [req.session.user.id, item_name, meal_type]);
+    res.redirect('/profile');
+  } catch (err) {
+    console.error(err);
+    res.redirect('/profile');
+  }
+});
+
+// POST /favorites/remove
+app.post('/favorites/remove', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  const { item_name } = req.body;
+  try {
+    await db.none('DELETE FROM favorites WHERE user_id = $1 AND item_name = $2', [req.session.user.id, item_name]);
+    res.redirect('/profile');
+  } catch (err) {
+    console.error(err);
+    res.redirect('/profile');
   }
 });
 
