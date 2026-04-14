@@ -119,15 +119,25 @@ app.get('/register', (req, res) => {
 
 // POST /register
 app.post('/register', async (req, res) => {
-	const { username, email, password } = req.body;
-	try {
-		const hash = await bcrypt.hash(password, 10);
-		await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hash]);
-		res.status(200).redirect('/login');
-	} catch (err) {
-		console.error(err);
-		res.status(400).render('pages/register', { message: 'Username or email already exists.', error: true });
-	}
+  const { username, email, password } = req.body;
+
+  // Password strength validation
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).render('pages/register', {
+      message: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.',
+      error: true
+    });
+  }
+
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hash]);
+    res.status(200).redirect('/login');
+  } catch (err) {
+    console.error(err);
+    res.status(400).render('pages/register', { message: 'Username or email already exists.', error: true });
+  }
 });
 
 // GET /logout
