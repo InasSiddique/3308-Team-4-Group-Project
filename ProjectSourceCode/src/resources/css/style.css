@@ -240,6 +240,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+}
+
+.date-right {
+  display: inherit;
+  flex: 1;
+  justify-content: end;
 }
 
 .period-btn {
@@ -270,9 +277,11 @@ body {
 .date-range {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-size: 14px;
   font-weight: 500;
+  flex: 1;
 }
 
 .arrow-btn {
@@ -292,6 +301,18 @@ body {
 .filter-btn {
   display: flex;
   align-items: center;
+  gap: 6px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  margin-right: 10px;
+  cursor: pointer;
+  background: #fff;
+  color: var(--cu-dark-grey);
+}
+
+.input-text {
   gap: 6px;
   border: 1px solid #d0d0d0;
   border-radius: 4px;

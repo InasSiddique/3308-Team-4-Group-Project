@@ -67,7 +67,7 @@
 			<!-- ── Date Navigation ── -->
 			<div class="date-nav" aria-label="Week navigation">
 				<div class="date-left">
-					<button class="period-btn">Weekly ▾</button>
+					<button class="period-btn">Daily ▾</button>
 					<div class="date-input-wrap" id="dateInputDisplay">
 						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#CFB87C" stroke-width="2" aria-hidden="true">
 							<rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -83,16 +83,20 @@
 					<span id="dateRangeLabel"></span>
 					<button class="arrow-btn" id="nextWeek" aria-label="Next week">›</button>
 				</div>
-				<button class="filter-btn" aria-label="Filter menu items">
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#565A5C" stroke-width="2" aria-hidden="true">
-						<line x1="4" y1="6" x2="20" y2="6"/>
-						<line x1="8" y1="12" x2="16" y2="12"/>
-						<line x1="11" y1="18" x2="13" y2="18"/>
-					</svg>
-					Filters
-				</button>
-        <input id="item-search" aria-label="Search menu items" autocomplete="off" placeholder="Search items">
-        </input>
+        <div class="date-right">
+        <span>
+          <button id="filter-button" class="filter-btn" aria-label="Filter menu items">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#565A5C" stroke-width="2" aria-hidden="true">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+              <line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            Filters
+          </button>
+            <div id="filter-menu" class="filter-menu d-none"></div>
+        </span>
+        <input id="item-search" class="input-text w-50" aria-label="Search menu items" autocomplete="off" placeholder="Search items"></input>
+      </div>
 			</div>
 
 			<!-- ── Week Header ── -->

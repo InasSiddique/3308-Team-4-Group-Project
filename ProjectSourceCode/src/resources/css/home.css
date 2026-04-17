@@ -181,6 +181,34 @@
   width: 25%;
 }
 
+.filter-menu {
+  position: absolute;
+  background-color: #f5f5f5;
+  width: 15%;
+  overflow: auto;
+  transform: translateX(-40%);
+  outline: 2px solid var(--cu-dark-grey);
+  border-radius: 2px;
+  display: inline-grid;
+}
+
+.filter-menu> :nth-child(2) {
+  grid-column: 2;
+}
+
+.filter-button {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.filter-button.inactive {
+  color: var(--cu-dark-grey);
+}
+
 
 .buffbites-title:after {
   content: '🞃';

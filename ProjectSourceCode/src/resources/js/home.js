@@ -20,6 +20,11 @@ let locationSlug = "center-for-community";
 
 let targetDate = new Date()
 
+let filters = {
+  name: "",
+  tags: new Set()
+}
+
 function getTodayIndex() {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
@@ -136,6 +141,7 @@ function renderWeekHeader() {
 
 // ── tags ──
 const ALLERGENS = new Set(['Milk', 'Egg', 'Wheat', 'Soy', 'Peanuts', 'Tree Nuts', 'Sesame', 'Shellfish', 'Fish', 'Gluten']);
+const TAGS = new Set(['Vegan', 'Vegetarian', 'Pork', ...ALLERGENS]);
 function tagsHTML(icons) {
   if (icons == undefined) return "";
 
@@ -226,6 +232,9 @@ function renderMenu() {
 
     el.appendChild(stationBlock);
   }
+
+
+  filterItems(filters);
 }
 
 async function getLocationsAndRender() {
@@ -325,6 +334,14 @@ loadQueryParams();
 getLocationsAndRender();
 getMenuDataAndRender(targetDate);
 
+const locationHeader = document.getElementById('location-header')
+const locationSelect = document.getElementById('location-select')
+
+document.addEventListener('click', (e) => {
+  locationHeader.classList.remove('open')
+  locationSelect.classList.add("d-none");
+});
+
 document.getElementById('prevWeek').addEventListener('click', () => {
   targetDate.setDate(targetDate.getDate() - 7);
   getMenuDataAndRender(targetDate);
@@ -334,19 +351,29 @@ document.getElementById('nextWeek').addEventListener('click', () => {
   getMenuDataAndRender(targetDate);
 });
 
-document.getElementById("location-header").addEventListener('click', () => {
-  document.getElementById("location-select").classList.toggle("d-none");
-  document.getElementById("location-header").classList.toggle("open");
+document.getElementById("location-header").addEventListener('click', (e) => {
+  locationSelect.classList.toggle("d-none");
+  locationHeader.classList.toggle("open");
+  e.stopPropagation();
 })
 
-function filterItems(name) {
+function filterItems() {
   let foodItems = document.getElementsByClassName('food-item');
 
   for (let foodItem of foodItems) {
     let foodName = foodItem.querySelector(".food-name");
 
+
+    // filter by tag
+    let foodTags = [...foodItem.querySelectorAll(".tag")].map(e => e.textContent.toLowerCase());
+    if (foodTags.some(tag => filters.tags.has(tag))) {
+      foodItem.classList.add('d-none');
+      continue;
+    }
+
+    // filter by name
     let foodText = foodName.textContent.toLowerCase();
-    let nameLower = name.toLowerCase();
+    let nameLower = filters.name.toLowerCase();
 
     let match = foodText.includes(nameLower);
 
@@ -359,5 +386,43 @@ function filterItems(name) {
 }
 
 document.getElementById("item-search").addEventListener('input', (event) => {
-  filterItems(event.target.value);
+  filters.name = event.target.value.toLowerCase();
+  filterItems();
 })
+
+const filterButton = document.getElementById('filter-button');
+const filterMenu = document.getElementById('filter-menu');
+
+function toggleFilterTag(key) {
+  if (filters.tags.has(key)) {
+    filters.tags.delete(key);
+    return;
+  }
+  filters.tags.add(key);
+}
+
+function createTagButton(tag) {
+  tag = tag.toLowerCase();
+  let btn = document.createElement('span')
+  btn.innerText = tag;
+  btn.addEventListener('click', () => {
+    toggleFilterTag(tag);
+    btn.classList.toggle("inactive")
+    filterItems();
+  });
+  btn.classList.add('filter-button');
+  filterMenu.appendChild(btn);
+}
+
+function createTagButtons() {
+  for (let tag of TAGS) {
+    createTagButton(tag);
+  }
+}
+
+filterButton.addEventListener('click', (e) => {
+  filterMenu.classList.toggle('d-none');
+  e.stopPropagation();
+});
+
+createTagButtons();
