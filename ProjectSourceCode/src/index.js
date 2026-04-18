@@ -29,7 +29,7 @@ const hbs = handlebars.create({
 
 // database configuration
 const dbConfig = {
-  host: 'db', // the database server
+  host: process.env.POSTGRES_HOST, // the database server
   port: 5432, // the database port
   database: process.env.POSTGRES_DB, // the database name
   user: process.env.POSTGRES_USER, // the user account to connect with
@@ -137,6 +137,89 @@ app.post('/register', async (req, res) => {
 // GET /logout
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
+});
+
+// GET /profile
+app.get('/profile', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  try {
+    const user = await db.oneOrNone('SELECT id, username, email FROM users WHERE id = $1', [req.session.user.id]);
+    if (!user) {
+      return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
+    }
+    res.status(200).render('pages/profile', { user });
+  } catch (err) {
+    console.error(err);
+    res.status(400).render('pages/profile', { message: 'Something went wrong.', error: true });
+  }
+});
+
+// POST /profile/update-password
+app.post('/profile/update-password', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  const { old_password, new_password } = req.body;
+  try {
+    // Fetch the current hashed password from the DB
+    const user = await db.oneOrNone('SELECT * FROM users WHERE id = $1', [req.session.user.id]);
+    if (!user) {
+      return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
+    }
+
+    // Check that the old password matches
+    const match = await bcrypt.compare(old_password, user.password);
+    if (!match) {
+      return res.status(400).render('pages/profile', { user: { id: user.id, username: user.username, email: user.email }, message: 'Current password is incorrect.', error: true });
+    }
+
+    // Hash and save the new password
+    const hash = await bcrypt.hash(new_password, 10);
+    await db.none('UPDATE users SET password = $1 WHERE id = $2', [hash, req.session.user.id]);
+
+    res.status(200).render('pages/profile', { user: { id: user.id, username: user.username, email: user.email }, message: 'Password updated successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(400).render('pages/profile', { message: 'Failed to update password.', error: true });
+  }
+});
+
+// POST /profile/update-username
+app.post('/profile/update-username', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  const { username } = req.body;
+  try {
+    await db.none('UPDATE users SET username = $1 WHERE id = $2', [username, req.session.user.id]);
+    req.session.user.username = username;
+    const user = await db.oneOrNone('SELECT id, username, email FROM users WHERE id = $1', [req.session.user.id]);
+    res.status(200).render('pages/profile', { user, message: 'Username updated successfully.' });
+  } catch (err) {
+    console.error(err);
+    const user = await db.oneOrNone('SELECT id, username, email FROM users WHERE id = $1', [req.session.user.id]);
+    res.status(400).render('pages/profile', { user, message: 'Username already taken.', error: true });
+  }
+});
+
+// POST /profile/update-email
+app.post('/profile/update-email', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  const { email } = req.body;
+  try {
+    await db.none('UPDATE users SET email = $1 WHERE id = $2', [email, req.session.user.id]);
+    req.session.user.email = email;
+    const user = await db.oneOrNone('SELECT id, username, email FROM users WHERE id = $1', [req.session.user.id]);
+    res.status(200).render('pages/profile', { user, message: 'Email updated successfully.' });
+  } catch (err) {
+    console.error(err);
+    const user = await db.oneOrNone('SELECT id, username, email FROM users WHERE id = $1', [req.session.user.id]);
+    res.status(400).render('pages/profile', { user, message: 'Email already in use.', error: true });
+  }
 });
 
 // GET /home
