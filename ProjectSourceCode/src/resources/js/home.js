@@ -340,6 +340,7 @@ const locationSelect = document.getElementById('location-select')
 document.addEventListener('click', (e) => {
   locationHeader.classList.remove('open')
   locationSelect.classList.add("d-none");
+  filterMenu.classList.add('d-none');
 });
 
 document.getElementById('prevWeek').addEventListener('click', () => {
