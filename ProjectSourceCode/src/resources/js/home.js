@@ -11,13 +11,21 @@ const BLACKLISTED_MENUS = ["c4c-meal-of-the-day", 'vc-meal-of-the-day']
 const BLACKLISTED_CATEGORIES = ['condiment', 'fruit', 'snack', 'salad', 'other', 'grain', 'beverage']
 
 // ── state ──
+let signedIn = false;
+let favorites = [];
 let menuData = null;
 let dates = null;
 // selectedTabIndex of -1 means the ALL tab
 let selectedTabIndex = -1;
 let selectedDayIndex = 0;
+let locationSlug = "center-for-community";
 
 let targetDate = new Date()
+
+let filters = {
+  name: "",
+  tags: new Set()
+}
 
 function getTodayIndex() {
   const today = new Date();
@@ -135,6 +143,7 @@ function renderWeekHeader() {
 
 // ── tags ──
 const ALLERGENS = new Set(['Milk', 'Egg', 'Wheat', 'Soy', 'Peanuts', 'Tree Nuts', 'Sesame', 'Shellfish', 'Fish', 'Gluten']);
+const TAGS = new Set(['Vegan', 'Vegetarian', 'Pork', ...ALLERGENS]);
 function tagsHTML(icons) {
   if (icons == undefined) return "";
 
@@ -155,6 +164,54 @@ function createElement(element, elementClass, innerHTML = "") {
   return elt;
 }
 
+const ADD_FAVORITE_ENDPOINT = "/profile/add-favorite"
+const REMOVE_FAVORITE_ENDPOINT = "/profile/remove-favorite"
+const GET_FAVORITES_ENDPOINT = "/profile/favorites"
+
+async function getFavorites() {
+  let favoritesResponse = await fetch(GET_FAVORITES_ENDPOINT, { method: "GET" });
+  if (!favoritesResponse.ok) {
+    console.log("Error getting favorites: " + favoritesResponse.status);
+  }
+  let favoritesJSON = await favoritesResponse.json();
+  favorites = favoritesJSON.items.map(e => e.toLowerCase());
+}
+
+function createFavoriteButton(food) {
+  const svgNS = "http://www.w3.org/2000/svg"
+  const parent = document.createElement("span");
+  const svg = document.createElementNS(svgNS, "svg");
+  const path = document.createElementNS(svgNS, "path");
+
+  svg.setAttribute("width", "20");
+  svg.setAttribute("height", "20");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.classList.add("heart")
+  path.setAttribute("d", "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z");
+  svg.appendChild(path);
+  parent.appendChild(svg);
+
+  if (favorites.includes(food.name.toLowerCase())) {
+    svg.classList.add('filled')
+  }
+
+  parent.addEventListener('click', async (e) => {
+    let active = svg.classList.toggle('filled');
+
+    if (active) {
+      await fetch(ADD_FAVORITE_ENDPOINT, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
+    } else {
+      await fetch(REMOVE_FAVORITE_ENDPOINT, { method: "DELETE", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
+    }
+
+
+    await getFavorites();
+    filterItems(filters);
+  });
+
+  return parent;
+}
+
 function createFoodItem(food) {
   let foodItem = createElement('div', 'food-item');
   let foodItemLeft = createElement('div', 'food-item-left');
@@ -164,6 +221,9 @@ function createFoodItem(food) {
   foodItemLeft.appendChild(createElement('div', 'food-tags', tagsHTML(food?.icons?.food_icons)))
 
   foodItem.appendChild(createElement('div', 'food-calories', food?.rounded_nutrition_info?.calories))
+  if (signedIn) {
+    foodItem.appendChild(createFavoriteButton(food))
+  }
 
   return foodItem;
 }
@@ -225,11 +285,31 @@ function renderMenu() {
 
     el.appendChild(stationBlock);
   }
+
+
+  filterItems(filters);
 }
 
 async function getLocationsAndRender() {
   let locationsData = await fetchWithCache("/getLocations", { method: "GET" });
-  console.log(locationsData);
+
+  let locationSelect = document.getElementById("location-select");
+  locationSelect.innerHTML = "";
+
+  for (let location of locationsData.data) {
+    let btn = document.createElement('button');
+    btn.classList.add('w-100')
+    btn.innerText = location.name;
+
+    btn.onclick = () => {
+      locationSlug = location.slug;
+      getMenuDataAndRender(targetDate);
+      locationSelect.classList.add("d-none");
+      document.getElementById("location-header").classList.remove("open");
+    };
+
+    locationSelect.appendChild(btn);
+  }
 }
 
 async function fetchWithCache(url, options) {
@@ -258,16 +338,52 @@ async function fetchWithCache(url, options) {
   return responseJson;
 }
 
+function updateUrlWithLocation() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("location", locationSlug);
+
+  history.pushState({}, '', url);
+}
+
+function loadQueryParams() {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("location")) return;
+  locationSlug = url.searchParams.get("location");
+}
+
+async function checkSignedIn() {
+  let checkStatus = await fetch("/check-session", { method: "GET" });
+  signedIn = checkStatus.status == "200";
+
+  if (!signedIn) return;
+
+  document.getElementById("login-button").classList.add("d-none");
+  document.getElementById("register-button").classList.add("d-none");
+  document.getElementById("profile-button").classList.remove("d-none");
+  document.getElementById("logout-button").classList.remove("d-none");
+  createTagButton("favorites", inactive = true);
+  await getFavorites();
+}
+
 async function getMenuDataAndRender(date) {
+  if (!signedIn) {
+    await checkSignedIn();
+  }
+
   // round date to nearest day to help cache requests
   date.setHours(0);
   date.setMinutes(0);
   date.setSeconds(0);
   date.setMilliseconds(0);
-  let menuJson = await fetchWithCache("/getWeeklyMenu?" + new URLSearchParams({ location: "center-for-community", date: date }), {
+
+  updateUrlWithLocation();
+
+  let menuJson = await fetchWithCache("/getWeeklyMenu?" + new URLSearchParams({ location: locationSlug, date: date }), {
     method: "GET",
   })
   menuData = menuJson.data;
+
+  document.getElementById("location-header").innerText = menuData.name;
 
   menuData.active_menu_types = menuData.active_menu_types.filter(t => !BLACKLISTED_MENUS.includes(t.slug))
 
@@ -285,8 +401,18 @@ async function getMenuDataAndRender(date) {
 }
 
 // ── init ──
+loadQueryParams();
 getLocationsAndRender();
 getMenuDataAndRender(targetDate);
+
+const locationHeader = document.getElementById('location-header')
+const locationSelect = document.getElementById('location-select')
+
+document.addEventListener('click', (e) => {
+  locationHeader.classList.remove('open')
+  locationSelect.classList.add("d-none");
+  filterMenu.classList.add('d-none');
+});
 
 document.getElementById('prevWeek').addEventListener('click', () => {
   targetDate.setDate(targetDate.getDate() - 7);
@@ -296,3 +422,86 @@ document.getElementById('nextWeek').addEventListener('click', () => {
   targetDate.setDate(targetDate.getDate() + 7);
   getMenuDataAndRender(targetDate);
 });
+
+document.getElementById("location-header").addEventListener('click', (e) => {
+  locationSelect.classList.toggle("d-none");
+  locationHeader.classList.toggle("open");
+  e.stopPropagation();
+})
+
+function filterItems() {
+  let foodItems = document.getElementsByClassName('food-item');
+
+  for (let foodItem of foodItems) {
+    let foodName = foodItem.querySelector(".food-name");
+
+
+    // filter by tag
+    let foodTags = [...foodItem.querySelectorAll(".tag")].map(e => e.textContent.toLowerCase());
+    if (foodTags.some(tag => filters.tags.has(tag))) {
+      foodItem.classList.add('d-none');
+      continue;
+    }
+
+    if (filters.tags.has("favorites") && !favorites.includes(foodName.textContent.toLowerCase())) {
+      foodItem.classList.add('d-none');
+      continue;
+    }
+
+    // filter by name
+    let foodText = foodName.textContent.toLowerCase();
+    let nameLower = filters.name.toLowerCase();
+
+    let match = foodText.includes(nameLower);
+
+    if (match) {
+      foodItem.classList.remove('d-none');
+    } else {
+      foodItem.classList.add('d-none');
+    }
+  }
+}
+
+document.getElementById("item-search").addEventListener('input', (event) => {
+  filters.name = event.target.value.toLowerCase();
+  filterItems();
+})
+
+const filterButton = document.getElementById('filter-button');
+const filterMenu = document.getElementById('filter-menu');
+
+function toggleFilterTag(key) {
+  if (filters.tags.has(key)) {
+    filters.tags.delete(key);
+    return;
+  }
+  filters.tags.add(key);
+}
+
+function createTagButton(tag, inactive = false) {
+  tag = tag.toLowerCase();
+  let btn = document.createElement('span')
+  btn.innerText = tag;
+  btn.addEventListener('click', (e) => {
+    toggleFilterTag(tag);
+    btn.classList.toggle("inactive")
+    filterItems();
+    e.stopPropagation();
+  });
+  btn.classList.add('filter-button');
+  if (inactive) btn.classList.add("inactive");
+  filterMenu.appendChild(btn);
+}
+
+function createTagButtons() {
+  for (let tag of TAGS) {
+    createTagButton(tag);
+  }
+}
+
+filterButton.addEventListener('click', (e) => {
+  filterMenu.classList.toggle('d-none');
+  e.stopPropagation();
+});
+
+createTagButtons();
