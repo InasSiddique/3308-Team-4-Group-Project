@@ -11,6 +11,8 @@ const BLACKLISTED_MENUS = ["c4c-meal-of-the-day", 'vc-meal-of-the-day']
 const BLACKLISTED_CATEGORIES = ['condiment', 'fruit', 'snack', 'salad', 'other', 'grain', 'beverage']
 
 // ── state ──
+let signedIn = false;
+let favorites = [];
 let menuData = null;
 let dates = null;
 // selectedTabIndex of -1 means the ALL tab
@@ -162,6 +164,54 @@ function createElement(element, elementClass, innerHTML = "") {
   return elt;
 }
 
+const ADD_FAVORITE_ENDPOINT = "/profile/add-favorite"
+const REMOVE_FAVORITE_ENDPOINT = "/profile/remove-favorite"
+const GET_FAVORITES_ENDPOINT = "/profile/favorites"
+
+async function getFavorites() {
+  let favoritesResponse = await fetch(GET_FAVORITES_ENDPOINT, { method: "GET" });
+  if (!favoritesResponse.ok) {
+    console.log("Error getting favorites: " + favoritesResponse.status);
+  }
+  let favoritesJSON = await favoritesResponse.json();
+  favorites = favoritesJSON.items.map(e => e.toLowerCase());
+}
+
+function createFavoriteButton(food) {
+  const svgNS = "http://www.w3.org/2000/svg"
+  const parent = document.createElement("span");
+  const svg = document.createElementNS(svgNS, "svg");
+  const path = document.createElementNS(svgNS, "path");
+
+  svg.setAttribute("width", "20");
+  svg.setAttribute("height", "20");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.classList.add("heart")
+  path.setAttribute("d", "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z");
+  svg.appendChild(path);
+  parent.appendChild(svg);
+
+  if (favorites.includes(food.name.toLowerCase())) {
+    svg.classList.add('filled')
+  }
+
+  parent.addEventListener('click', async (e) => {
+    let active = svg.classList.toggle('filled');
+
+    if (active) {
+      await fetch(ADD_FAVORITE_ENDPOINT, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
+    } else {
+      await fetch(REMOVE_FAVORITE_ENDPOINT, { method: "DELETE", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
+    }
+
+
+    await getFavorites();
+    filterItems(filters);
+  });
+
+  return parent;
+}
+
 function createFoodItem(food) {
   let foodItem = createElement('div', 'food-item');
   let foodItemLeft = createElement('div', 'food-item-left');
@@ -171,6 +221,9 @@ function createFoodItem(food) {
   foodItemLeft.appendChild(createElement('div', 'food-tags', tagsHTML(food?.icons?.food_icons)))
 
   foodItem.appendChild(createElement('div', 'food-calories', food?.rounded_nutrition_info?.calories))
+  if (signedIn) {
+    foodItem.appendChild(createFavoriteButton(food))
+  }
 
   return foodItem;
 }
@@ -298,7 +351,21 @@ function loadQueryParams() {
   locationSlug = url.searchParams.get("location");
 }
 
+async function checkSignedIn() {
+  let checkStatus = await fetch("/check-session", { method: "GET" });
+  signedIn = checkStatus.status == "200";
+
+  if (!signedIn) return;
+
+  createTagButton("favorites", inactive = true);
+  await getFavorites();
+}
+
 async function getMenuDataAndRender(date) {
+  if (!signedIn) {
+    await checkSignedIn();
+  }
+
   // round date to nearest day to help cache requests
   date.setHours(0);
   date.setMinutes(0);
@@ -372,6 +439,11 @@ function filterItems() {
       continue;
     }
 
+    if (filters.tags.has("favorites") && !favorites.includes(foodName.textContent.toLowerCase())) {
+      foodItem.classList.add('d-none');
+      continue;
+    }
+
     // filter by name
     let foodText = foodName.textContent.toLowerCase();
     let nameLower = filters.name.toLowerCase();
@@ -402,16 +474,18 @@ function toggleFilterTag(key) {
   filters.tags.add(key);
 }
 
-function createTagButton(tag) {
+function createTagButton(tag, inactive = false) {
   tag = tag.toLowerCase();
   let btn = document.createElement('span')
   btn.innerText = tag;
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', (e) => {
     toggleFilterTag(tag);
     btn.classList.toggle("inactive")
     filterItems();
+    e.stopPropagation();
   });
   btn.classList.add('filter-button');
+  if (inactive) btn.classList.add("inactive");
   filterMenu.appendChild(btn);
 }
 

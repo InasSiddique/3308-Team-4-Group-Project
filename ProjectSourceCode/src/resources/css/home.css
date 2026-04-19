@@ -221,3 +221,14 @@
 .buffbites-title.open:after {
   content: '🞁';
 }
+
+.heart {
+  stroke: black;
+  stroke-width: 2px;
+  fill: none;
+}
+
+.heart.filled {
+  stroke: red;
+  fill: red;
+}

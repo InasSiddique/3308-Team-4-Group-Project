@@ -4,3 +4,14 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS items (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL
+);
+
+/* users to items */
+CREATE TABLE IF NOT EXISTS favorites (
+  user_id INTEGER,
+  item_id INTEGER
+);
