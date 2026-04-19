@@ -123,6 +123,11 @@ app.post('/login', async (req, res) => {
 
 // GET /register
 app.get('/register', (req, res) => {
+  if (req.session.user) {
+    res.redirect("/home");
+    return;
+  }
+
   res.render('pages/register');
 });
 

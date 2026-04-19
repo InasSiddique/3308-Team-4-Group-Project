@@ -23,9 +23,18 @@
 						<span class="campus">BOULDER</span>
 					</div>
 				</div>
-				<button class="hamburger" aria-label="Open menu" aria-expanded="false">
-					<span></span><span></span><span></span>
-				</button>
+      <div class="dropdown">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+          Pages
+        </a>
+
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+          <li><a class="dropdown-item" id="login-button" href="/login">Login</a></li>
+          <li><a class="dropdown-item" id="register-button" href="/register">Register</a></li>
+          <li><a class="dropdown-item d-none" id="profile-button" href="/profile">Profile</a></li>
+          <li><a class="dropdown-item d-none" id="logout-button" href="/logout">Logout</a></li>
+        </ul>
+      </div>
 			</nav>
 			<div class="gold-bar" role="presentation"></div>
 

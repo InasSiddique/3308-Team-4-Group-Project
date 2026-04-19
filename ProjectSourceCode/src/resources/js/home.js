@@ -357,6 +357,10 @@ async function checkSignedIn() {
 
   if (!signedIn) return;
 
+  document.getElementById("login-button").classList.add("d-none");
+  document.getElementById("register-button").classList.add("d-none");
+  document.getElementById("profile-button").classList.remove("d-none");
+  document.getElementById("logout-button").classList.remove("d-none");
   createTagButton("favorites", inactive = true);
   await getFavorites();
 }
