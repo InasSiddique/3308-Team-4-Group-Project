@@ -159,12 +159,114 @@ app.get('/profile', async (req, res) => {
     if (!user) {
       return res.status(404).render('pages/profile', { message: 'User not found.', error: true });
     }
-    res.status(200).render('pages/profile', { user });
+
+    const favorites = await db.any('SELECT * FROM favorites WHERE user_id = $1 ORDER BY item_name', [req.session.user.id]);
+
+    let notifications = [];
+    if (favorites.length > 0) {
+      try {
+        const locResponse = await fetch(NUTRISLICE_LOCATIONS_ENDPOINT);
+        const locations = await locResponse.json();
+
+        const locationsToCheck = locations.slice(0, 3);
+
+        for (const location of locationsToCheck) {
+          const menuType = location.active_menu_types?.[0];
+          if (!menuType) continue;
+
+          const today = new Date();
+          let url = menuType.urls.digest_menu_by_week_api_url_template
+            .replace('{year}', today.getFullYear())
+            .replace('{month}', (today.getMonth() + 1).toString().padStart(2, '0'))
+            .replace('{day}', today.getDate().toString().padStart(2, '0'));
+
+          const menuResponse = await fetch(NUTRISLICE_URL + url);
+          const menuData = await menuResponse.json();
+
+          const menuItems = menuData?.days?.flatMap(day =>
+            day?.menu_items?.map(item => item?.food_item?.name?.toLowerCase()) ?? []
+          ) ?? [];
+
+          for (const fav of favorites) {
+            const match = menuItems.some(item => item?.includes(fav.item_name.toLowerCase()));
+            if (match) {
+              notifications.push({
+                item_name: fav.item_name,
+                location: location.name
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Notification check failed:', err);
+      }
+    }
+
+    res.status(200).render('pages/profile', { user, favorites, notifications });
   } catch (err) {
     console.error(err);
     res.status(400).render('pages/profile', { message: 'Something went wrong.', error: true });
   }
 });
+
+app.post('/profile/favorites/add', async (req, res) => {
+  if (!req.session.user) {
+    res.status(400).json({ message: "you are not logged in. cannot add favorite." });
+    return;
+  }
+
+  const { item_name } = req.body;
+
+  if (item_name == null) {
+    res.status(400).json({ message: "you must specify an 'item_name' to favorite." })
+    return;
+  }
+
+  try {
+    await db.none('INSERT INTO favorites (user_id, item_name) VALUES ($1, $2) ON CONFLICT DO NOTHING', [req.session.user.id, item_name]);
+    return res.status(200).redirect('/profile'); //json({ message: "successfully added favorite " });
+  } catch (err) {
+    console.log(`add-favorite error: ${err}`);
+    res.status(400).json({ message: "error adding favorite." });
+  }
+});
+
+app.post('/profile/favorites/remove', async (req, res) => {
+  if (!req.session.user) {
+    res.status(400).json({ message: "you are not logged in. cannot add favorite." });
+    return;
+  }
+  const { item_name } = req.body;
+
+  if (item_name == null) {
+    res.status(400).json({ message: "you must specify an 'item_name' to favorite." })
+    return;
+  }
+  try {
+    await db.none('DELETE FROM favorites WHERE user_id = $1 AND item_name = $2', [req.session.user.id, item_name]);
+
+    res.status(200).redirect('/profile') //json("successfully removed favorite");
+  } catch (err) {
+    console.log({ message: `REMOVE FAVORITE ERROR: ${err}` });
+    res.status(400).json({ message: "an error has occured" })
+  }
+});
+
+app.get('/profile/favorites', async (req, res) => {
+  if (!req.session.user) {
+    res.status(400).json({ message: "you are not logged in. cannot get favorites." });
+    return;
+  }
+  try {
+    const favorites = await db.any('SELECT * FROM favorites WHERE user_id = $1 ORDER BY item_name', [req.session.user.id]);
+
+    res.status(200).json({ "items": favorites.map(e => e.item_name) })
+  } catch (err) {
+    console.log({ message: `GET FAVORITES ERROR: ${err}` });
+    res.status(400).json({ message: "an error has occured" })
+  }
+
+})
 
 // POST /profile/update-password
 app.post('/profile/update-password', async (req, res) => {
@@ -231,74 +333,6 @@ app.post('/profile/update-email', async (req, res) => {
     res.status(400).render('pages/profile', { user, message: 'Email already in use.', error: true });
   }
 });
-
-app.post('/profile/add-favorite', async (req, res) => {
-  if (!req.session.user) {
-    res.status(400).json({ message: "you are not logged in. cannot add favorite." });
-    return;
-  }
-
-  const { item_name } = req.body;
-
-  if (item_name == null) {
-    res.status(400).json({ message: "you must specify an 'item_name' to favorite." })
-    return;
-  }
-
-  try {
-    let item = await db.oneOrNone('SELECT id, name FROM items WHERE name = $1;', [item_name]);
-    // add items to item list if they aren't found
-    if (item == null) {
-      item = await db.one('INSERT INTO items (name) VALUES ($1) RETURNING *;', [item_name]);
-    }
-
-    await db.none('INSERT INTO favorites (user_id, item_id) VALUES ($1, $2);', [req.session.user.id, item.id]);
-
-    return res.status(200).json({ message: "successfully added favorite " });
-
-  } catch (err) {
-    console.log(`add-favorite error: ${err}`);
-    res.status(400).json({ message: "error adding favorite." });
-  }
-});
-
-app.delete('/profile/remove-favorite', async (req, res) => {
-  if (!req.session.user) {
-    res.status(400).json({ message: "you are not logged in. cannot add favorite." });
-    return;
-  }
-
-  const { item_name } = req.body;
-
-  if (item_name == null) {
-    res.status(400).json({ message: "you must specify an 'item_name' to favorite." })
-    return;
-  }
-
-  try {
-    await db.none('DELETE FROM favorites WHERE user_id = $1 AND item_id = (SELECT id FROM items WHERE name = $2);', [req.session.user.id, item_name])
-    res.status(200).json("successfully removed favorite");
-  } catch (err) {
-    console.log({ message: `REMOVE FAVORITE ERROR: ${err}` });
-    res.status(400).json({ message: "an error has occured" })
-  }
-});
-
-app.get('/profile/favorites', async (req, res) => {
-  if (!req.session.user) {
-    res.status(400).json({ message: "you are not logged in. cannot get favorites." });
-    return;
-  }
-  try {
-    let items = await db.any("SELECT name FROM items JOIN favorites ON favorites.item_id = items.id WHERE favorites.user_id = $1;", [req.session.user.id])
-
-    res.status(200).json({ "items": items.map(e => e.name) })
-  } catch (err) {
-    console.log({ message: `GET FAVORITES ERROR: ${err}` });
-    res.status(400).json({ message: "an error has occured" })
-  }
-
-})
 
 app.get('/check-session', async (req, res) => {
   if (req.session.user) {

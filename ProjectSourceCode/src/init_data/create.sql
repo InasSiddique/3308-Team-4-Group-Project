@@ -5,13 +5,9 @@ CREATE TABLE IF NOT EXISTS users (
   password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS items (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL
-);
-
-/* users to items */
 CREATE TABLE IF NOT EXISTS favorites (
-  user_id INTEGER,
-  item_id INTEGER
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  item_name VARCHAR(255) NOT NULL,
+  UNIQUE(user_id, item_name)
 );

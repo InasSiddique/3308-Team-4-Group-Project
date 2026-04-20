@@ -164,8 +164,8 @@ function createElement(element, elementClass, innerHTML = "") {
   return elt;
 }
 
-const ADD_FAVORITE_ENDPOINT = "/profile/add-favorite"
-const REMOVE_FAVORITE_ENDPOINT = "/profile/remove-favorite"
+const ADD_FAVORITE_ENDPOINT = "/profile/favorites/add"
+const REMOVE_FAVORITE_ENDPOINT = "/profile/favorites/remove"
 const GET_FAVORITES_ENDPOINT = "/profile/favorites"
 
 async function getFavorites() {
@@ -201,7 +201,7 @@ function createFavoriteButton(food) {
     if (active) {
       await fetch(ADD_FAVORITE_ENDPOINT, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
     } else {
-      await fetch(REMOVE_FAVORITE_ENDPOINT, { method: "DELETE", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
+      await fetch(REMOVE_FAVORITE_ENDPOINT, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item_name: food?.name }) })
     }
 
 
