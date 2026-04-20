@@ -15,6 +15,17 @@
   <!-- Navbar -->
   <nav class="navbar bg-black px-3">
     <img src="../../resources/img/BuffBitesLogo.png" height="40">
+
+    <div class="dropdown">
+      <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+        Pages
+      </a>
+
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        <li><a class="dropdown-item" href="/home">Home</a></li>
+        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+      </ul>
+    </div>
   </nav>
 
   <!-- Profile -->
@@ -67,20 +78,20 @@
             <h6 class="text-success">🔔 Available this week:</h6>
             {{#each notifications}}
               <div class="alert alert-success py-1 px-2 mb-1" style="font-size: 0.9rem;">
-                <strong>{{this.item_name}}</strong> — {{this.location}} ({{this.meal_type}})
+                <strong>{{this.item_name}}</strong> — {{this.location}} <!--({{this.meal_type}})-->
               </div>
             {{/each}}
           </div>
         {{/if}}
 
         <!-- Add a Favorite -->
-        <form action="/favorites/add" method="POST" class="mb-3 d-flex gap-2">
+        <form action="/profile/favorites/add" method="POST" class="mb-3 d-flex gap-2">
           <input type="text" name="item_name" class="form-control form-control-sm" placeholder="Item name" required>
-          <select name="meal_type" class="form-select form-select-sm" style="width: 130px;">
-            <option value="Breakfast">Breakfast</option>
-            <option value="Lunch/Dinner">Lunch/Dinner</option>
-            <option value="Desserts">Desserts</option>
-          </select>
+          <!-- <select name="meal_type" class="form-select form-select-sm" style="width: 130px;"> -->
+          <!--   <option value="Breakfast">Breakfast</option> -->
+          <!--   <option value="Lunch/Dinner">Lunch/Dinner</option> -->
+          <!--   <option value="Desserts">Desserts</option> -->
+          <!-- </select> -->
           <button class="btn btn-sm btn-warning">Add</button>
         </form>
 
@@ -92,9 +103,9 @@
                 <div>
                   <span style="color: rgb(252, 228, 92); font-size: 1.3rem;">★</span>
                   <strong>{{this.item_name}}</strong>
-                  <small class="text-muted">({{this.meal_type}})</small>
+                  <!-- <small class="text-muted">({{this.meal_type}})</small> -->
                 </div>
-                <form action="/favorites/remove" method="POST">
+                <form action="/profile/favorites/remove" method="POST">
                   <input type="hidden" name="item_name" value="{{this.item_name}}">
                   <button class="btn btn-sm btn-outline-danger">Remove</button>
                 </form>
@@ -107,6 +118,5 @@
       </div>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

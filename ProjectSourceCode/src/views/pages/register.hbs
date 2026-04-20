@@ -22,13 +22,28 @@
     background-color: #bfa56a; 
     color: black; 
     }
+    .form-error {
+      color: #bf1c04
+    }
   </style>
 </head>
 <body>
 
   <!-- Navbar -->
   <nav class="navbar bg-black px-3">
-    <img src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5b/Colorado_Buffaloes_logo.svg/256px-Colorado_Buffaloes_logo.svg.png" height="40">
+    <img src="../../resources/img/BuffBitesLogo.png" height="40">
+
+
+  <div class="dropdown">
+    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+      Pages
+    </a>
+
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+      <li><a class="dropdown-item" href="/home">Home</a></li>
+      <li><a class="dropdown-item" href="/login">Login</a></li>
+    </ul>
+  </div>
   </nav>
 
   <!-- Sign Up -->
@@ -38,13 +53,14 @@
       <h3 class="text-center">Create Account</h3>
       <p class="text-center text-muted">Join Buff Bites</p>
 
-      <form action="/register" method="POST">
-        <input class="form-control mb-3" type="text" placeholder="Username" required>
-        <input class="form-control mb-3" type="email" placeholder="Email" required>
-        <input class="form-control mb-3" type="password" placeholder="Password" required>
-        <input class="form-control mb-3" type="password" placeholder="Confirm Password" required>
+      <form action="/register" method="POST" onsubmit="return confirmPassword(event, 'password', 'confirm-password', 'form-error')">
+        <input class="form-control mb-3" type="text" name="username" placeholder="Username" required>
+        <input class="form-control mb-3" type="email" name="email" placeholder="Email" required>
+        <input class="form-control mb-3" type="password" name="password" placeholder="Password" id="password" required>
+        <input class="form-control mb-3" type="password" placeholder="Confirm Password" id="confirm-password" required>
+				<div id="form-error" class="form-error mb-3" style="display: none;">Hidden</div>
 
-        <button class="btn btn-cu w-100">Sign Up</button>
+        <button class="btn btn-cu w-100" type="submit">Sign Up</button>
       </form>
 
       <div class="text-center mt-3">
@@ -54,6 +70,5 @@
 
     </div>
   </div>
-
 </body>
 </html>

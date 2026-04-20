@@ -13,18 +13,22 @@
 
 /* ─── Custom Properties ─────────────────────────────── */
 :root {
-  --cu-gold:        #CFB87C;
-  --cu-gold-dark:   #a8943e;
-  --cu-gold-text:   #7a6a1e;   /* gold on white — AA large text */
-  --cu-black:       #000000;
-  --cu-dark-grey:   #565A5C;
-  --cu-light-grey:  #A2A4A3;
-  --cu-nav-bg:      #1a1a18;   /* near-black nav/footer */
-  --cu-gold-on-dark:#CFB87C;   /* gold on #1a1a18 — AA ✓ */
+  --cu-gold: #CFB87C;
+  --cu-gold-dark: #a8943e;
+  --cu-gold-text: #7a6a1e;
+  /* gold on white — AA large text */
+  --cu-black: #000000;
+  --cu-dark-grey: #565A5C;
+  --cu-light-grey: #A2A4A3;
+  --cu-nav-bg: #1a1a18;
+  /* near-black nav/footer */
+  --cu-gold-on-dark: #CFB87C;
+  /* gold on #1a1a18 — AA ✓ */
 }
 
 /* ─── Base ───────────────────────────────────────────── */
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
 }
@@ -114,7 +118,6 @@ body {
 .buffbites {
   position: relative;
   height: 200px;
-  overflow: hidden;
   background: #2c2c2a;
   display: flex;
   align-items: flex-end;
@@ -123,13 +126,11 @@ body {
 .buffbites-overlay {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(207, 184, 124, 0.04) 0px,
-    rgba(207, 184, 124, 0.04) 1px,
-    transparent 1px,
-    transparent 12px
-  );
+  background: repeating-linear-gradient(45deg,
+      rgba(207, 184, 124, 0.04) 0px,
+      rgba(207, 184, 124, 0.04) 1px,
+      transparent 1px,
+      transparent 12px);
 }
 
 .buffbites-bg-svg {
@@ -153,7 +154,8 @@ body {
 .buffbites-title {
   color: #fff;
   font-size: 20px;
-  font-weight: 500;
+  font-weight: bold;
+  margin: 0px;
 }
 
 .buffbites-badge {
@@ -238,6 +240,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+}
+
+.date-right {
+  display: inherit;
+  flex: 1;
+  justify-content: end;
 }
 
 .period-btn {
@@ -268,9 +277,11 @@ body {
 .date-range {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-size: 14px;
   font-weight: 500;
+  flex: 1;
 }
 
 .arrow-btn {
@@ -290,6 +301,18 @@ body {
 .filter-btn {
   display: flex;
   align-items: center;
+  gap: 6px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  margin-right: 10px;
+  cursor: pointer;
+  background: #fff;
+  color: var(--cu-dark-grey);
+}
+
+.input-text {
   gap: 6px;
   border: 1px solid #d0d0d0;
   border-radius: 4px;
@@ -471,31 +494,103 @@ body {
 
 /* Tablet (≤768px): compress date nav, smaller tabs */
 @media (max-width: 768px) {
-  .top-nav { padding: 10px 16px; }
-  .station-tabs { padding: 10px 16px 0; gap: 4px; }
-  .tab { padding: 6px 10px; font-size: 11px; }
-  .date-nav { padding: 10px 16px; gap: 8px; }
-  .date-range span { font-size: 12px; }
-  .week-header { padding: 0 16px; }
-  .day-name { font-size: 10px; }
-  .day-num { font-size: 14px; }
-  .empty-state { padding: 60px 16px; }
-  .allergen-footer { padding: 20px 16px 12px; }
+  .top-nav {
+    padding: 10px 16px;
+  }
+
+  .station-tabs {
+    padding: 10px 16px 0;
+    gap: 4px;
+  }
+
+  .tab {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .date-nav {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .date-range span {
+    font-size: 12px;
+  }
+
+  .week-header {
+    padding: 0 16px;
+  }
+
+  .day-name {
+    font-size: 10px;
+  }
+
+  .day-num {
+    font-size: 14px;
+  }
+
+  .empty-state {
+    padding: 60px 16px;
+  }
+
+  .allergen-footer {
+    padding: 20px 16px 12px;
+  }
 }
 
 /* Mobile (≤480px): stack date nav, hide date range text */
 @media (max-width: 480px) {
-  .logo-text .univ { font-size: 11px; }
-  .logo-text .campus { font-size: 12px; }
-  .date-nav { flex-direction: column; align-items: flex-start; }
-  .date-range { width: 100%; justify-content: center; }
-  .filter-btn { align-self: flex-end; }
-  .buffbites-title { font-size: 16px; }
-  .buffbites { height: 160px; }
-  .week-header { padding: 0 8px; }
-  .day-col { padding: 6px 2px; }
-  .day-num-wrap { width: 26px; height: 26px; }
-  .day-num { font-size: 13px; }
-  .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-  .footer-links a { margin: 0; }
+  .logo-text .univ {
+    font-size: 11px;
+  }
+
+  .logo-text .campus {
+    font-size: 12px;
+  }
+
+  .date-nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .date-range {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-btn {
+    align-self: flex-end;
+  }
+
+  .buffbites {
+    height: 160px;
+  }
+
+  .week-header {
+    padding: 0 8px;
+  }
+
+  .day-col {
+    padding: 6px 2px;
+  }
+
+  .day-num-wrap {
+    width: 26px;
+    height: 26px;
+  }
+
+  .day-num {
+    font-size: 13px;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .footer-links a {
+    margin: 0;
+  }
 }
