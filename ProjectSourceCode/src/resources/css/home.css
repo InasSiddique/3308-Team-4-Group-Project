@@ -51,7 +51,10 @@
   margin-left: 5px;
 }
 
-.station-section-content {}
+.station-section-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
 
 .collapse-active:after {
   content: "\2796";
