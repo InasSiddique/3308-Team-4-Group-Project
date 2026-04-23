@@ -15,25 +15,106 @@
   <!-- Navbar -->
   <nav class="navbar bg-black px-3">
     <img src="../../resources/img/BuffBitesLogo.png" height="40">
+
+    <div class="dropdown">
+      <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+        Pages
+      </a>
+
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        <li><a class="dropdown-item" href="/home">Home</a></li>
+        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+      </ul>
+    </div>
   </nav>
 
   <!-- Profile -->
   <div class="container-fluid mt-4">
-    <h1 class="text">Profile</h1>
+    <h1>Profile</h1>
     <div class="d-flex gap-3">
-      <div class="card p-4 flex-grow-1" style="border: 2px solid #000;">
-        <h3 class="text">"First LastName"</h3>
-        <h6 class="text-muted">"email@something.net"</h6>
-        <br> 
-        <div class="d-flex align-items-center gap-4">
-          <h6 class="text mb-0" style="width: 100px;">Username:</h6>
-          <div class="border rounded px-2 py-1" style="width: 150px;">FAKEUSERNAME</div>
-        </div>
-        <div class="d-flex align-items-center gap-4">
-          <h6 class="text mb-0" style="width: 100px;">Password:</h6>
-          <input type="password" class="form-control" value="fakepassword" readonly style="width: 150px; pointer-events: none;">
-        </div>
+      <div class="card p-4" style="border: 2px solid #000;">
+
+        <h3>{{user.username}}</h3>
+        <h6 class="text-muted">{{user.email}}</h6>
         <br>
+
+        <!-- Update Username -->
+        <form action="/profile/update-username" method="POST" class="mb-3">
+          <div class="d-flex align-items-center gap-4">
+            <h6 class="mb-0" style="width: 100px;">Username:</h6>
+            <input type="text" name="username" class="form-control" value="{{user.username}}" style="width: 200px;" required>
+            <button class="btn btn-sm btn-dark">Update</button>
+          </div>
+        </form>
+
+        <!-- Update Email -->
+        <form action="/profile/update-email" method="POST" class="mb-3">
+          <div class="d-flex align-items-center gap-4">
+            <h6 class="mb-0" style="width: 100px;">Email:</h6>
+            <input type="email" name="email" class="form-control" value="{{user.email}}" style="width: 200px;" required>
+            <button class="btn btn-sm btn-dark">Update</button>
+          </div>
+        </form>
+
+        <!-- Update Password -->
+        <form action="/profile/update-password" method="POST" class="mb-3">
+          <div class="d-flex flex-column gap-2" style="max-width: 400px;">
+            <h6 class="mb-0">Password:</h6>
+            <input type="password" name="old_password" class="form-control" placeholder="Current password" required>
+            <input type="password" name="new_password" class="form-control" placeholder="New password" required>
+            <button class="btn btn-sm btn-dark">Update Password</button>
+          </div>
+        </form>
+
+      </div>
+
+      <!-- Favorites -->
+      <div class="card p-4" style="border: 2px solid #000; min-width: 300px;">
+        <h3>My Favorites</h3>
+
+        <!-- Notifications -->
+        {{#if notifications}}
+          <div class="mb-3">
+            <h6 class="text-success">🔔 Available this week:</h6>
+            {{#each notifications}}
+              <div class="alert alert-success py-1 px-2 mb-1" style="font-size: 0.9rem;">
+                <strong>{{this.item_name}}</strong> — {{this.location}} <!--({{this.meal_type}})-->
+              </div>
+            {{/each}}
+          </div>
+        {{/if}}
+
+        <!-- Add a Favorite -->
+        <form action="/profile/favorites/add" method="POST" class="mb-3 d-flex gap-2">
+          <input type="text" name="item_name" class="form-control form-control-sm" placeholder="Item name" required>
+          <!-- <select name="meal_type" class="form-select form-select-sm" style="width: 130px;"> -->
+          <!--   <option value="Breakfast">Breakfast</option> -->
+          <!--   <option value="Lunch/Dinner">Lunch/Dinner</option> -->
+          <!--   <option value="Desserts">Desserts</option> -->
+          <!-- </select> -->
+          <button class="btn btn-sm btn-warning">Add</button>
+        </form>
+
+        <!-- Favorites List -->
+        {{#if favorites}}
+          {{#each favorites}}
+            <div class="card p-2 mb-2" style="border: 1px solid #000;">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <div>
+                  <span style="color: rgb(252, 228, 92); font-size: 1.3rem;">★</span>
+                  <strong>{{this.item_name}}</strong>
+                  <!-- <small class="text-muted">({{this.meal_type}})</small> -->
+                </div>
+                <form action="/profile/favorites/remove" method="POST">
+                  <input type="hidden" name="item_name" value="{{this.item_name}}">
+                  <button class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+              </div>
+            </div>
+          {{/each}}
+        {{else}}
+          <p class="text-muted">No favorites yet. Add some above!</p>
+        {{/if}}
       </div>
     </div>
   </div>
