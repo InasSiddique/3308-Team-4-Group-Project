@@ -1,6 +1,6 @@
 # 🦬 Buff Bites
 
-A CU Boulder-specific dining hall menu tracker that makes it easy to see what's being served across all campus dining halls. Buff Bites replaces the existing Nutrislice app with a more streamlined experience — view menus by dining hall, search for specific items, favorite your go-to meals, and get notified when they're on the schedule.
+A CU Boulder dining hall menu tracker that makes it easy to see what's being served across all campus dining halls. Buff Bites replaces the existing Nutrislice app with a more user-friendly experience. View menus by dining hall, search for specific items, favorite your most liked meals, and get notified when they're on the schedule.
 
 ---
 
