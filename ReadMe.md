@@ -107,7 +107,8 @@ The test suite covers:
 
 ## Deployed Application
 
-🔗 Coming soon
+[🔗 Deployed Application](https://three308-team-4-group-project.onrender.com/home?location=center-for-community)
+
 
 ---
 
