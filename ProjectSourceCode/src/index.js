@@ -134,6 +134,16 @@ app.get('/register', (req, res) => {
 // POST /register
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
+
+  // Password strength validation
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).render('pages/register', {
+      message: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.',
+      error: true
+    });
+  }
+
   try {
     const hash = await bcrypt.hash(password, 10);
     await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, hash]);
@@ -149,6 +159,9 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
+// GET /home
+app.get('/home', (req, res) => {
+    res.render('pages/home', { user: req.session.user || null });
 // GET /profile
 app.get('/profile', async (req, res) => {
   if (!req.session.user) {
